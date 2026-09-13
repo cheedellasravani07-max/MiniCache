@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MiniCache Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+    <h1>MiniCache</h1>
+    <p>In-Memory Cache Management Dashboard</p>
+</header>
+
+<main>
+
+    <!-- Cache Information -->
+
+    <section class="dashboard">
+
+        <div class="card">
+            <h3>Cache Size</h3>
+            <p id="cacheSize">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Capacity</h3>
+            <p id="capacity">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Cache Hits</h3>
+            <p id="hits">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Cache Misses</h3>
+            <p id="misses">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Hit Rate</h3>
+            <p id="hitRate">0%</p>
+        </div>
+
+    </section>
+    <!-- Cache Entries -->
+
+    <section class="panel">
+
+        <h2>Current Cache Entries</h2>
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+
+                <tbody id="cacheEntries">
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+    <!-- Add Cache Entry -->
+
+    <section class="panel">
+
+        <h2>Add / Update Cache Entry</h2>
+
+        <div class="form">
+
+            <input
+                    type="text"
+                    id="key"
+                    placeholder="Enter key"
+            >
+
+            <input
+                    type="text"
+                    id="value"
+                    placeholder="Enter value"
+            >
+
+            <input
+                    type="number"
+                    id="ttl"
+                    placeholder="TTL in milliseconds (optional)"
+            >
+
+            <button onclick="setCache()">
+                Add / Update
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- Get Cache Entry -->
+
+    <section class="panel">
+
+        <h2>Get Cache Entry</h2>
+
+        <div class="form">
+
+            <input
+                    type="text"
+                    id="getKey"
+                    placeholder="Enter key"
+            >
+
+            <button onclick="getCache()">
+                Get Value
+            </button>
+
+        </div>
+
+        <p id="getResult"></p>
+
+    </section>
+
+
+    <!-- Delete Cache Entry -->
+
+    <section class="panel">
+
+        <h2>Delete Cache Entry</h2>
+
+        <div class="form">
+
+            <input
+                    type="text"
+                    id="deleteKey"
+                    placeholder="Enter key"
+            >
+
+            <button onclick="deleteCache()">
+                Delete
+            </button>
+
+        </div>
+
+        <p id="deleteResult"></p>
+
+    </section>
+
+
+    <!-- Clear Cache -->
+
+    <section class="panel">
+
+        <h2>Cache Management</h2>
+
+        <button class="clear-button" onclick="clearCache()">
+            Clear Entire Cache
+        </button>
+
+        <p id="clearResult"></p>
+
+    </section>
+
+</main>
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
