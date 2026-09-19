@@ -200,3 +200,21 @@ td {
 tr:hover {
     background: #f9fafb;
 }
+/* Backend Status */
+
+.backend-status {
+    margin-top: 15px;
+    padding: 9px 16px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 20px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#backendStatus {
+    margin-left: 6px;
+    font-weight: 700;
+}

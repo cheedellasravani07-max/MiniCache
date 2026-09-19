@@ -1,4 +1,39 @@
 const API_URL = "https://minicache-api.onrender.com";
+
+// Check backend status
+async function checkBackendStatus() {
+
+    const statusElement =
+        document.getElementById("backendStatus");
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/cache/stats`
+        );
+
+        if (response.ok) {
+
+            statusElement.textContent = "🟢 Online";
+            statusElement.style.color = "green";
+
+        } else {
+
+            statusElement.textContent = "🔴 Offline";
+            statusElement.style.color = "red";
+        }
+
+    } catch (error) {
+
+        statusElement.textContent = "🔴 Offline";
+        statusElement.style.color = "red";
+
+        console.error(
+            "Backend status check failed:",
+            error
+        );
+    }
+}
 // Add / Update cache entry
 async function setCache() {
 
@@ -196,7 +231,7 @@ async function loadStatistics() {
 
 // Load statistics when page opens
 loadStatistics();
-
+checkBackendStatus();
 
 // Automatically refresh statistics every 2 seconds
 setInterval(loadStatistics, 2000);
@@ -242,3 +277,5 @@ loadEntries();
 
 // Automatically refresh entries every 2 seconds
 setInterval(loadEntries, 2000);
+// Check backend status every 5 seconds
+setInterval(checkBackendStatus, 10000);
