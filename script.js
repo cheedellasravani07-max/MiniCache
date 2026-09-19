@@ -284,3 +284,84 @@ loadEntries();
 setInterval(loadEntries, 2000);
 // Check backend status every 5 seconds
 setInterval(checkBackendStatus, 10000);
+// Run LRU eviction demonstration
+async function runLRUDemo() {
+
+    const resultElement =
+        document.getElementById("lruDemoResult");
+
+    resultElement.textContent =
+        "Running LRU demonstration...";
+
+    try {
+
+        // Step 1: Clear the cache
+        await fetch(`${API_URL}/cache`, {
+            method: "DELETE"
+        });
+
+        // Step 2: Add 100 entries
+        for (let i = 1; i <= 100; i++) {
+
+            await fetch(
+                `${API_URL}/cache/key/demo-${i}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        value: `Demo Value ${i}`
+                    })
+                }
+            );
+        }
+
+        // Step 3: Access demo-1
+        // This makes demo-1 the most recently used entry.
+        await fetch(
+            `${API_URL}/cache/key/demo-1`
+        );
+
+        // Step 4: Add one more entry
+        // This should evict the least recently used entry.
+        await fetch(
+            `${API_URL}/cache/key/demo-101`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    value: "Demo Value 101"
+                })
+            }
+        );
+
+        // Step 5: Get updated statistics
+        const response =
+            await fetch(`${API_URL}/cache/stats`);
+
+        const statistics =
+            await response.json();
+
+        resultElement.textContent =
+            `LRU Demo completed! ` +
+            `Cache Size: ${statistics.size}, ` +
+            `Evictions: ${statistics.evictions}`;
+
+        // Refresh dashboard
+        loadStatistics();
+        loadEntries();
+
+    } catch (error) {
+
+        resultElement.textContent =
+            "Unable to run LRU demonstration.";
+
+        console.error(
+            "LRU Demo Error:",
+            error
+        );
+    }
+}
