@@ -1,5 +1,4 @@
-const API_URL = "http://localhost:8080";
-
+const API_URL = "https://minicache-api.onrender.com";
 // Add / Update cache entry
 async function setCache() {
 
