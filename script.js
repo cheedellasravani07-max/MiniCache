@@ -181,6 +181,9 @@ async function loadStatistics() {
         document.getElementById("hitRate").textContent =
             statistics.hitRate.toFixed(2) + "%";
 
+        document.getElementById("evictions").textContent =
+            statistics.evictions;
+
     } catch (error) {
 
         console.error(
