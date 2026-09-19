@@ -101,7 +101,7 @@ public class CacheController {
         statistics.put("hits", cache.getCacheHits());
         statistics.put("misses", cache.getCacheMisses());
         statistics.put("hitRate", cache.getHitRate());
-
+        statistics.put("evictions", cache.getEvictionCount());
         return ResponseEntity.ok(statistics);
     }
     @GetMapping("/entries")

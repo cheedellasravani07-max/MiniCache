@@ -14,7 +14,7 @@ public class MiniCache<K, V> {
 
     private int cacheHits;
     private int cacheMisses;
-
+    private int evictionCount;
     public MiniCache(int capacity) {
 
         if (capacity <= 0) {
@@ -28,6 +28,7 @@ public class MiniCache<K, V> {
         this.list = new DoublyLinkedList<>();
         this.cacheHits = 0;
         this.cacheMisses = 0;
+        this.evictionCount = 0;
     }
 
     // Normal set - NO TTL
@@ -93,6 +94,7 @@ public class MiniCache<K, V> {
 
             if (removedNode != null) {
                 cache.remove(removedNode.key);
+                evictionCount++;
             }
         }
     }
@@ -157,6 +159,7 @@ public class MiniCache<K, V> {
 
         cacheHits = 0;
         cacheMisses = 0;
+        evictionCount = 0;
     }
 
     // Get number of cache hits
@@ -168,7 +171,9 @@ public class MiniCache<K, V> {
     public synchronized int getCacheMisses() {
         return cacheMisses;
     }
-
+    public synchronized int getEvictionCount() {
+        return evictionCount;
+    }
     // Calculate hit rate
     public synchronized double getHitRate() {
 

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import static org.junit.jupiter.api.Assertions.assertNull;
 public class MiniCacheTest {
 
     @Test
@@ -245,5 +245,23 @@ public class MiniCacheTest {
         MiniCache<String, String> cache = new MiniCache<>(5);
 
         assertEquals(5, cache.getCapacity());
+    }
+    @Test
+    void testLRUEvictionCount() {
+
+        MiniCache<String, String> cache = new MiniCache<>(2);
+
+        cache.set("A", "Apple");
+        cache.set("B", "Banana");
+
+        // Cache is full. Adding C should evict A.
+        cache.set("C", "Cherry");
+
+        assertEquals(2, cache.size());
+        assertEquals(1, cache.getEvictionCount());
+
+        assertNull(cache.get("A"));
+        assertEquals("Banana", cache.get("B"));
+        assertEquals("Cherry", cache.get("C"));
     }
 }
