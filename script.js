@@ -219,6 +219,11 @@ async function loadStatistics() {
         document.getElementById("evictions").textContent =
             statistics.evictions;
 
+        const now = new Date();
+
+        document.getElementById("lastUpdated").textContent =
+            now.toLocaleTimeString();
+
     } catch (error) {
 
         console.error(
