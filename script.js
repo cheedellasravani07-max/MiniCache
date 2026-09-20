@@ -1,5 +1,51 @@
 const API_URL = "https://minicache-api.onrender.com";
+// ===============================
+// Cache Activity Monitor
+// ===============================
 
+let activityLog = [];
+
+function addActivity(operation, key, status) {
+
+    const activityTable =
+        document.getElementById("activityLog");
+
+    if (!activityTable) {
+        return;
+    }
+
+    const time =
+        new Date().toLocaleTimeString();
+
+    activityLog.unshift({
+        time: time,
+        operation: operation,
+        key: key,
+        status: status
+    });
+
+    // Keep only the latest 20 activities
+    if (activityLog.length > 20) {
+        activityLog.pop();
+    }
+
+    activityTable.innerHTML = "";
+
+    activityLog.forEach(activity => {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${activity.time}</td>
+            <td>${activity.operation}</td>
+            <td>${activity.key}</td>
+            <td>${activity.status}</td>
+        `;
+
+        activityTable.appendChild(row);
+    });
+}
 // Check backend status
 async function checkBackendStatus() {
 
@@ -70,7 +116,11 @@ async function setCache() {
         const result = await response.text();
 
         alert(result);
-
+        addActivity(
+            "SET",
+            key,
+            response.ok ? "Success" : "Failed"
+        );
         loadStatistics();
 
     } catch (error) {
@@ -106,10 +156,22 @@ async function getCache() {
             resultElement.textContent =
                 "Value: " + value;
 
+            addActivity(
+                "GET",
+                key,
+                "HIT"
+            );
+
         } else {
 
             resultElement.textContent =
                 "Key not found.";
+
+            addActivity(
+                "GET",
+                key,
+                "MISS"
+            );
         }
 
         loadStatistics();
@@ -147,7 +209,11 @@ async function deleteCache() {
         const result = await response.text();
 
         resultElement.textContent = result;
-
+        addActivity(
+            "DELETE",
+            key,
+            response.ok ? "Success" : "Not Found"
+        );
         loadStatistics();
 
     } catch (error) {
