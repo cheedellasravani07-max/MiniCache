@@ -216,6 +216,20 @@ public class MiniCache<K, V> {
             );
         }
     }
+    // Check whether a key exists but has expired
+    public synchronized boolean isExpired(K key) {
+
+        validateKey(key);
+
+        CacheNode<K, V> node = cache.get(key);
+
+        if (node == null) {
+            return false;
+        }
+
+        return node.expiryTime > 0 &&
+                System.currentTimeMillis() >= node.expiryTime;
+    }
     // Get all current cache entries
     public synchronized Map<K, V> getEntries() {
 

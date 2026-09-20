@@ -26,6 +26,7 @@ public class CacheController {
 
     private final DateTimeFormatter timeFormatter =
             DateTimeFormatter.ofPattern("h:mm:ss a");
+
     public CacheController() {
         cache = new MiniCache<>(100);
     }
@@ -51,6 +52,11 @@ public class CacheController {
             long ttl = Long.parseLong(ttlObject.toString());
 
             cache.set(key, value, ttl);
+            addActivity(
+                    "SET",
+                    key,
+                    "TTL: " + ttl + " ms"
+            );
         } else {
             cache.set(key, value);
         }
@@ -64,19 +70,35 @@ public class CacheController {
         );
     }
 
-    // Get cache value
+
     @GetMapping("/key/{key}")
     public ResponseEntity<String> get(
             @PathVariable String key) {
 
+        // Check if the key expired before calling get()
+        boolean expired = cache.isExpired(key);
+
         String value = cache.get(key);
 
         if (value == null) {
-            addActivity(
-                    "GET",
-                    key,
-                    "MISS"
-            );
+
+            if (expired) {
+
+                addActivity(
+                        "GET",
+                        key,
+                        "EXPIRED"
+                );
+
+            } else {
+
+                addActivity(
+                        "GET",
+                        key,
+                        "MISS"
+                );
+            }
+
             return ResponseEntity.notFound().build();
         }
 
@@ -85,6 +107,7 @@ public class CacheController {
                 key,
                 "HIT"
         );
+
         return ResponseEntity.ok(value);
     }
 
