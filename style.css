@@ -290,3 +290,11 @@ tr:hover {
     margin-left: 6px;
     font-weight: 700;
 }
+.clear-activity-button {
+    background: #6b7280;
+    margin-bottom: 18px;
+}
+
+.clear-activity-button:hover {
+    background: #4b5563;
+}

@@ -427,14 +427,66 @@ async function loadEntries() {
         );
     }
 }
+// Load real cache activity from backend
+async function loadActivity() {
 
+    try {
+
+        const response = await fetch(
+            `${API_URL}/cache/activity`
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to load activity");
+        }
+
+        const activities = await response.json();
+
+        const tableBody =
+            document.getElementById("cacheActivity");
+
+        if (!tableBody) {
+            console.error("cacheActivity element not found");
+            return;
+        }
+
+        tableBody.innerHTML = "";
+
+        activities.forEach(activity => {
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${activity.time}</td>
+                <td>${activity.operation}</td>
+                <td>${activity.key}</td>
+                <td>${activity.status}</td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load cache activity:",
+            error
+        );
+    }
+}
 // Load entries when page opens
 loadEntries();
+// Load cache activity when page opens
+loadActivity();
 
 // Automatically refresh entries every 2 seconds
 setInterval(loadEntries, 2000);
+// Automatically refresh activity every 2 seconds
+setInterval(loadActivity, 2000);
 // Check backend status every 5 seconds
 setInterval(checkBackendStatus, 10000);
+
+
 // Run LRU eviction demonstration
 async function runLRUDemo() {
 
@@ -621,4 +673,18 @@ async function runTTLDemo() {
             error
         );
     }
+}
+// Clear cache activity log
+async function clearActivity() {
+
+    const activityLog =
+        document.getElementById("activityLog");
+
+    activityLog.innerHTML = `
+        <tr>
+            <td colspan="4">
+                No activity yet
+            </td>
+        </tr>
+    `;
 }
