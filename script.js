@@ -218,6 +218,62 @@ async function loadStatistics() {
 
         document.getElementById("evictions").textContent =
             statistics.evictions;
+        // Update performance summary
+
+        const totalRequests =
+            statistics.hits + statistics.misses;
+
+        const missRate =
+            totalRequests === 0
+                ? 0
+                : (statistics.misses * 100) / totalRequests;
+
+        const cacheUsage =
+            statistics.capacity === 0
+                ? 0
+                : (statistics.size * 100) / statistics.capacity;
+
+        document.getElementById("totalRequests").textContent =
+            totalRequests;
+
+        document.getElementById("performanceHitRate").textContent =
+            statistics.hitRate.toFixed(2) + "%";
+
+        document.getElementById("missRate").textContent =
+            missRate.toFixed(2) + "%";
+
+        document.getElementById("cacheUsage").textContent =
+            cacheUsage.toFixed(2) + "%";
+
+        document.getElementById("performanceEvictions").textContent =
+            statistics.evictions;
+
+
+// Performance message
+
+        const performanceMessage =
+            document.getElementById("performanceMessage");
+
+        if (totalRequests === 0) {
+
+            performanceMessage.textContent =
+                "Waiting for cache activity...";
+
+        } else if (statistics.hitRate >= 80) {
+
+            performanceMessage.textContent =
+                "Cache is serving requests efficiently.";
+
+        } else if (statistics.hitRate >= 50) {
+
+            performanceMessage.textContent =
+                "Cache performance is moderate.";
+
+        } else {
+
+            performanceMessage.textContent =
+                "Cache has a high miss rate.";
+        }
 
         const now = new Date();
 
