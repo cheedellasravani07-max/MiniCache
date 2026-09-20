@@ -275,3 +275,18 @@ tr:hover {
         grid-template-columns: 1fr;
     }
 }
+/* Cache Health Indicator */
+
+.cache-health {
+    margin-top: 18px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    font-weight: 600;
+}
+
+#cacheHealth {
+    margin-left: 6px;
+    font-weight: 700;
+}

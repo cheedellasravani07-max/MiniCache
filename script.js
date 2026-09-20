@@ -287,6 +287,31 @@ async function loadStatistics() {
             error
         );
     }
+    // Update cache health indicator
+
+    const healthElement =
+        document.getElementById("cacheHealth");
+
+    if (totalRequests === 0) {
+
+        healthElement.textContent =
+            "⚪ No Activity";
+
+    } else if (statistics.hitRate >= 80) {
+
+        healthElement.textContent =
+            "🟢 Healthy";
+
+    } else if (statistics.hitRate >= 50) {
+
+        healthElement.textContent =
+            "🟡 Moderate";
+
+    } else {
+
+        healthElement.textContent =
+            "🔴 High Miss Rate";
+    }
 }
 
 
