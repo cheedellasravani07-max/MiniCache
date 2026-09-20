@@ -6,14 +6,26 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.minicache.model.CacheActivity;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 @RestController
 @RequestMapping("/cache")
 @CrossOrigin(origins = "*")
 public class CacheController {
 
     private final MiniCache<String, String> cache;
+    private final LinkedList<CacheActivity> activityLog =
+            new LinkedList<>();
 
+    private static final int MAX_ACTIVITY = 20;
+
+    private final DateTimeFormatter timeFormatter =
+            DateTimeFormatter.ofPattern("h:mm:ss a");
     public CacheController() {
         cache = new MiniCache<>(100);
     }
@@ -42,7 +54,11 @@ public class CacheController {
         } else {
             cache.set(key, value);
         }
-
+        addActivity(
+                "SET",
+                key,
+                "Success"
+        );
         return ResponseEntity.ok(
                 "Cache updated successfully"
         );
@@ -56,9 +72,19 @@ public class CacheController {
         String value = cache.get(key);
 
         if (value == null) {
+            addActivity(
+                    "GET",
+                    key,
+                    "MISS"
+            );
             return ResponseEntity.notFound().build();
         }
 
+        addActivity(
+                "GET",
+                key,
+                "HIT"
+        );
         return ResponseEntity.ok(value);
     }
 
@@ -70,9 +96,18 @@ public class CacheController {
         boolean deleted = cache.delete(key);
 
         if (!deleted) {
+            addActivity(
+                    "DELETE",
+                    key,
+                    "Not Found"
+            );
             return ResponseEntity.notFound().build();
         }
-
+        addActivity(
+                "DELETE",
+                key,
+                "Success"
+        );
         return ResponseEntity.ok(
                 "Key deleted successfully"
         );
@@ -110,5 +145,33 @@ public class CacheController {
         Map<String, String> entries = cache.getEntries();
 
         return ResponseEntity.ok(entries);
+    }
+    private void addActivity(
+            String operation,
+            String key,
+            String status) {
+
+        String time =
+                LocalTime.now().format(timeFormatter);
+
+        activityLog.addFirst(
+                new CacheActivity(
+                        time,
+                        operation,
+                        key,
+                        status
+                )
+        );
+
+        if (activityLog.size() > MAX_ACTIVITY) {
+            activityLog.removeLast();
+        }
+    }
+    @GetMapping("/activity")
+    public ResponseEntity<List<CacheActivity>> activity() {
+
+        return ResponseEntity.ok(
+                new ArrayList<>(activityLog)
+        );
     }
 }
