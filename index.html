@@ -201,6 +201,39 @@
         <p id="lruDemoResult"></p>
     </section>
 
+    <!-- TTL Expiry Demo -->
+
+    <section class="panel">
+
+        <h2>TTL Expiry Demo</h2>
+
+        <p>
+            Demonstrate automatic cache expiration using
+            Time-To-Live (TTL).
+        </p>
+
+        <div class="form">
+
+            <input
+                    type="number"
+                    id="ttlDemoInput"
+                    placeholder="TTL in milliseconds"
+                    value="5000"
+                    min="1000"
+            >
+
+            <button onclick="runTTLDemo()">
+                Run TTL Demo
+            </button>
+
+        </div>
+
+        <p id="ttlDemoResult"></p>
+
+    </section>
+
+
+
 </main>
 
 <script src="script.js"></script>

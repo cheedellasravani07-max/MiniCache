@@ -365,3 +365,109 @@ async function runLRUDemo() {
         );
     }
 }
+// Run TTL expiry demonstration
+async function runTTLDemo() {
+
+    const ttlInput =
+        document.getElementById("ttlDemoInput");
+
+    const resultElement =
+        document.getElementById("ttlDemoResult");
+
+    const ttl = Number(ttlInput.value);
+
+    if (!ttl || ttl < 1000) {
+
+        resultElement.textContent =
+            "Please enter a TTL of at least 1000 milliseconds.";
+
+        return;
+    }
+
+    const demoKey =
+        "ttl-demo-" + Date.now();
+
+    try {
+
+        // Step 1: Create a cache entry with TTL
+        resultElement.textContent =
+            `Creating cache entry with TTL of ${ttl} ms...`;
+
+        const setResponse = await fetch(
+            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    value: "TTL Demo Value",
+                    ttl: ttl
+                })
+            }
+        );
+
+        if (!setResponse.ok) {
+            throw new Error("Failed to create TTL demo entry.");
+        }
+
+        // Refresh dashboard
+        loadStatistics();
+        loadEntries();
+
+        // Step 2: Confirm that the key exists
+        const beforeResponse = await fetch(
+            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`
+        );
+
+        if (beforeResponse.ok) {
+
+            resultElement.textContent =
+                `Entry created successfully. ` +
+                `Waiting ${ttl / 1000} seconds for expiration...`;
+
+        } else {
+
+            resultElement.textContent =
+                "Unable to verify TTL entry.";
+
+            return;
+        }
+
+        // Step 3: Wait until TTL expires
+        await new Promise(resolve =>
+            setTimeout(resolve, ttl + 500)
+        );
+
+        // Step 4: Try to get the expired entry
+        const afterResponse = await fetch(
+            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`
+        );
+
+        // Refresh dashboard
+        loadStatistics();
+        loadEntries();
+
+        if (!afterResponse.ok) {
+
+            resultElement.textContent =
+                `TTL Demo completed successfully! ` +
+                `The key expired after ${ttl / 1000} seconds.`;
+
+        } else {
+
+            resultElement.textContent =
+                "TTL expiration did not occur as expected.";
+        }
+
+    } catch (error) {
+
+        resultElement.textContent =
+            "Unable to run TTL demonstration.";
+
+        console.error(
+            "TTL Demo Error:",
+            error
+        );
+    }
+}
