@@ -274,7 +274,34 @@ async function loadStatistics() {
             performanceMessage.textContent =
                 "Cache has a high miss rate.";
         }
+        // Update Cache Health
 
+        const healthElement =
+            document.getElementById("cacheHealth");
+
+        if (healthElement) {
+
+            if (totalRequests === 0) {
+
+                healthElement.textContent =
+                    "⚪ No Activity";
+
+            } else if (statistics.hitRate >= 80) {
+
+                healthElement.textContent =
+                    "🟢 Healthy";
+
+            } else if (statistics.hitRate >= 50) {
+
+                healthElement.textContent =
+                    "🟡 Moderate";
+
+            } else {
+
+                healthElement.textContent =
+                    "🔴 High Miss Rate";
+            }
+        }
         const now = new Date();
 
         document.getElementById("lastUpdated").textContent =
@@ -288,81 +315,16 @@ async function loadStatistics() {
         );
     }
 }
-// Load Cache Health
-async function loadCacheHealth() {
 
-    const healthElement =
-        document.getElementById("cacheHealth");
 
-    if (!healthElement) {
-        console.error("cacheHealth element not found");
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `${API_URL}/cache/stats`
-        );
-
-        if (!response.ok) {
-            throw new Error("Failed to fetch cache statistics");
-        }
-
-        const statistics = await response.json();
-
-        const hitRate = Number(statistics.hitRate);
-        const totalRequests =
-            Number(statistics.hits) +
-            Number(statistics.misses);
-
-        // No requests yet
-        if (totalRequests === 0) {
-
-            healthElement.textContent = "Checking...";
-            return;
-        }
-
-        // Healthy cache
-        if (hitRate >= 70) {
-
-            healthElement.textContent =
-                "Healthy";
-
-            // Moderate cache
-        } else if (hitRate >= 40) {
-
-            healthElement.textContent =
-                "Moderate";
-
-            // Needs attention
-        } else {
-
-            healthElement.textContent =
-                "Needs Attention";
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Unable to load cache health:",
-            error
-        );
-
-        healthElement.textContent =
-            "Unavailable";
-    }
-}
 
 // Load statistics when page opens
 loadStatistics();
 checkBackendStatus();
-loadCacheHealth();
+
 
 // Automatically refresh statistics every 2 seconds
 setInterval(loadStatistics, 2000);
-// Automatically refresh cache health every 2 seconds
-setInterval(loadCacheHealth, 2000);
 // Load current cache entries
 async function loadEntries() {
 
