@@ -13,6 +13,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 @RestController
 @RequestMapping("/cache")
 @CrossOrigin(origins = "*")
@@ -244,5 +247,104 @@ public class CacheController {
         return ResponseEntity.ok(
                 entries.size() + " entries added successfully"
         );
+    }
+    @GetMapping("/benchmark/concurrency")
+    public ResponseEntity<Map<String, Object>> concurrencyBenchmark(
+            @RequestParam(defaultValue = "100") int requests) {
+
+        if (requests <= 0) {
+
+            Map<String, Object> error = new HashMap<>();
+
+            error.put(
+                    "error",
+                    "Requests must be greater than 0"
+            );
+
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        ExecutorService executor =
+                Executors.newFixedThreadPool(
+                        Math.min(requests, 100)
+                );
+
+        CountDownLatch startLatch =
+                new CountDownLatch(1);
+
+        CountDownLatch doneLatch =
+                new CountDownLatch(requests);
+
+        long startTime =
+                System.nanoTime();
+
+        for (int i = 0; i < requests; i++) {
+
+            executor.submit(() -> {
+
+                try {
+
+                    startLatch.await();
+
+                    cache.get("benchmark-key");
+
+                } catch (InterruptedException e) {
+
+                    Thread.currentThread().interrupt();
+
+                } finally {
+
+                    doneLatch.countDown();
+                }
+            });
+        }
+
+        startLatch.countDown();
+
+        try {
+
+            doneLatch.await();
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            executor.shutdownNow();
+
+            Map<String, Object> error =
+                    new HashMap<>();
+
+            error.put(
+                    "error",
+                    "Benchmark interrupted"
+            );
+
+            return ResponseEntity.internalServerError()
+                    .body(error);
+        }
+
+        long endTime =
+                System.nanoTime();
+
+        executor.shutdown();
+
+        double durationMs =
+                (endTime - startTime) / 1_000_000.0;
+
+        double requestsPerSecond =
+                durationMs == 0
+                        ? 0
+                        : requests / (durationMs / 1000.0);
+
+        Map<String, Object> result =
+                new HashMap<>();
+
+        result.put("requests", requests);
+        result.put("durationMs",
+                Math.round(durationMs * 100.0) / 100.0);
+        result.put("requestsPerSecond",
+                Math.round(requestsPerSecond * 100.0) / 100.0);
+
+        return ResponseEntity.ok(result);
     }
 }

@@ -150,6 +150,34 @@
         <p id="bulkResult"></p>
 
     </section>
+    <!-- Concurrency Benchmark -->
+
+    <section class="panel">
+
+        <h2>Concurrency Benchmark</h2>
+
+        <p>
+            Test MiniCache performance with concurrent requests.
+        </p>
+
+        <div class="benchmark-input">
+
+            <input
+                    type="number"
+                    id="benchmarkRequests"
+                    placeholder="Number of requests"
+                    min="1"
+            />
+
+            <button onclick="runConcurrencyBenchmark()">
+                Run Benchmark
+            </button>
+
+        </div>
+
+        <div id="benchmarkResult"></div>
+
+    </section>
 
     <!-- Get Cache Entry -->
 

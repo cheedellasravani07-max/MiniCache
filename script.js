@@ -957,3 +957,61 @@ async function bulkSetCache() {
         );
     }
 }
+// Run concurrency benchmark
+async function runConcurrencyBenchmark() {
+
+    const requestsInput =
+        document.getElementById("benchmarkRequests");
+
+    const resultElement =
+        document.getElementById("benchmarkResult");
+
+    const requests =
+        requestsInput.value.trim();
+
+    if (!requests || Number(requests) <= 0) {
+
+        resultElement.textContent =
+            "Please enter a valid number of requests.";
+
+        return;
+    }
+
+    resultElement.textContent =
+        "Running benchmark...";
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/cache/benchmark/concurrency?requests=${encodeURIComponent(requests)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            resultElement.textContent =
+                data.error || "Benchmark failed.";
+
+            return;
+        }
+
+        resultElement.innerHTML = `
+            <div class="benchmark-results">
+                <p><strong>Requests:</strong> ${data.requests}</p>
+                <p><strong>Execution Time:</strong> ${data.durationMs} ms</p>
+                <p><strong>Requests/Second:</strong> ${data.requestsPerSecond}</p>
+            </div>
+        `;
+
+    } catch (error) {
+
+        resultElement.textContent =
+            "Unable to connect to backend.";
+
+        console.error(
+            "Concurrency benchmark error:",
+            error
+        );
+    }
+}

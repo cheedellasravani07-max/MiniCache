@@ -355,3 +355,18 @@ tr:hover {
     margin-top: 12px;
     font-weight: 600;
 }
+/* ================================
+   Concurrency Benchmark Results
+   ================================ */
+
+.benchmark-results {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.benchmark-results p {
+    margin: 8px 0;
+    font-size: 15px;
+}
