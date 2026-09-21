@@ -134,7 +134,32 @@ public class MiniCache<K, V> {
 
         return node.value;
     }
+    // Get value without affecting cache hit/miss statistics
+    public synchronized V getWithoutMetrics(K key) {
 
+        validateKey(key);
+
+        CacheNode<K, V> node = cache.get(key);
+
+        if (node == null) {
+            return null;
+        }
+
+        // Check expiration
+        if (node.expiryTime > 0 &&
+                System.currentTimeMillis() >= node.expiryTime) {
+
+            cache.remove(key);
+            list.removeNode(node);
+
+            return null;
+        }
+
+        // Keep LRU behavior
+        list.moveToFront(node);
+
+        return node.value;
+    }
     // Delete a key
     public synchronized boolean delete(K key) {
 

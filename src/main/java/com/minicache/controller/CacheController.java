@@ -286,7 +286,7 @@ public class CacheController {
 
                     startLatch.await();
 
-                    cache.get("benchmark-key");
+                    cache.getWithoutMetrics("benchmark-key");
 
                 } catch (InterruptedException e) {
 
