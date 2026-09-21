@@ -4,7 +4,50 @@ const API_URL = "https://minicache-api.onrender.com";
 // ===============================
 
 let activityLog = [];
+async function loadActivity() {
+    try {
+        const response = await fetch(`${API_URL}/cache/activity`);
 
+        if (!response.ok) {
+            throw new Error("Failed to load activity");
+        }
+
+        const activities = await response.json();
+
+        const activityTable = document.getElementById("activityLog");
+
+        if (!activityTable) {
+            return;
+        }
+
+        activityTable.innerHTML = "";
+
+        if (activities.length === 0) {
+            activityTable.innerHTML = `
+                <tr>
+                    <td colspan="4">No activity yet</td>
+                </tr>
+            `;
+            return;
+        }
+
+        activities.forEach(activity => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${activity.time}</td>
+                <td>${activity.operation}</td>
+                <td>${activity.key}</td>
+                <td>${activity.status}</td>
+            `;
+
+            activityTable.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Activity loading error:", error);
+    }
+}
 function addActivity(operation, key, status) {
 
     const activityTable =
@@ -688,3 +731,66 @@ async function clearActivity() {
         </tr>
     `;
 }
+loadActivity();
+// Load current LRU order
+async function loadLRUOrder() {
+
+    const lruElement =
+        document.getElementById("lruOrder");
+
+    if (!lruElement) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(`${API_URL}/cache/lru`);
+
+        if (!response.ok) {
+            throw new Error("Failed to load LRU order");
+        }
+
+        const lruKeys =
+            await response.json();
+
+        if (lruKeys.length === 0) {
+
+            lruElement.textContent =
+                "Cache is empty.";
+
+            return;
+        }
+
+        lruElement.innerHTML =
+            lruKeys.map((key, index) => {
+
+                const label =
+                    index === 0
+                        ? "🟢 MRU"
+                        : index === lruKeys.length - 1
+                            ? "🔴 LRU"
+                            : "";
+
+                return `
+                    <div class="lru-item">
+                        <span>${label}</span>
+                        <strong>${key}</strong>
+                    </div>
+                `;
+
+            }).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load LRU order:",
+            error
+        );
+
+        lruElement.textContent =
+            "Unable to load LRU order.";
+    }
+}
+loadLRUOrder();
+setInterval(loadLRUOrder, 2000);
