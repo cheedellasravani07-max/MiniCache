@@ -863,3 +863,38 @@ async function loadLRUOrder() {
 }
 loadLRUOrder();
 setInterval(loadLRUOrder, 2000);
+async function checkCacheHealth() {
+
+    const healthElement =
+        document.getElementById("cacheHealth");
+
+    if (!healthElement) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(`${API_URL}/cache/health`);
+
+        if (!response.ok) {
+            throw new Error("Health check failed");
+        }
+
+        const data = await response.json();
+
+        if (data.status === "UP") {
+
+            healthElement.textContent = "Healthy";
+
+        } else {
+
+            healthElement.textContent = "Down";
+        }
+
+    } catch (error) {
+
+        healthElement.textContent = "Backend Offline";
+    }
+}
+checkCacheHealth();
