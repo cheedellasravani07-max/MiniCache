@@ -123,6 +123,33 @@
 
     </section>
 
+    <!-- Bulk Cache Operations -->
+
+    <section class="panel">
+
+        <h2>Bulk Cache Operations</h2>
+
+        <p>
+            Add multiple cache entries at once using JSON format.
+        </p>
+
+        <textarea
+                id="bulkEntries"
+                rows="6"
+                placeholder='Enter JSON, for example:
+{
+  "key1": "value1",
+  "key2": "value2",
+  "key3": "value3"
+}'></textarea>
+
+        <button onclick="bulkSetCache()">
+            Add Bulk Entries
+        </button>
+
+        <p id="bulkResult"></p>
+
+    </section>
 
     <!-- Get Cache Entry -->
 

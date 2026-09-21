@@ -898,3 +898,62 @@ async function checkCacheHealth() {
     }
 }
 checkCacheHealth();
+// Bulk cache operation
+async function bulkSetCache() {
+
+    const input =
+        document.getElementById("bulkEntries").value;
+
+    const resultElement =
+        document.getElementById("bulkResult");
+
+    if (!input.trim()) {
+
+        resultElement.textContent =
+            "Please enter cache entries.";
+
+        return;
+    }
+
+    try {
+
+        const entries = JSON.parse(input);
+
+        const response = await fetch(
+            `${API_URL}/cache/bulk`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(entries)
+            }
+        );
+
+        const result = await response.text();
+
+        if (response.ok) {
+
+            resultElement.textContent =
+                result;
+
+            loadStatistics();
+            loadEntries();
+
+        } else {
+
+            resultElement.textContent =
+                "Bulk operation failed: " + result;
+        }
+
+    } catch (error) {
+
+        resultElement.textContent =
+            "Invalid JSON format.";
+
+        console.error(
+            "Bulk operation error:",
+            error
+        );
+    }
+}
