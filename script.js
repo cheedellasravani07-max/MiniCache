@@ -415,7 +415,35 @@ async function loadStatistics() {
 
         document.getElementById("lastUpdated").textContent =
             now.toLocaleTimeString();
+// Update real-time metrics chart
 
+        metricsLabels.push(
+            now.toLocaleTimeString()
+        );
+
+        hitRateData.push(
+            statistics.hitRate
+        );
+
+        const usage =
+            statistics.capacity === 0
+                ? 0
+                : (statistics.size * 100) / statistics.capacity;
+
+        cacheUsageData.push(
+            Number(usage.toFixed(2))
+        );
+
+// Keep only the latest 10 points
+
+        if (metricsLabels.length > 10) {
+
+            metricsLabels.shift();
+            hitRateData.shift();
+            cacheUsageData.shift();
+        }
+
+        metricsChart.update();
     } catch (error) {
 
         console.error(
@@ -717,6 +745,47 @@ async function runTTLDemo() {
         );
     }
 }
+// Real-Time Metrics Chart
+
+const metricsLabels = [];
+const hitRateData = [];
+const cacheUsageData = [];
+
+const metricsChart =
+    new Chart(
+        document.getElementById("metricsChart"),
+        {
+            type: "line",
+
+            data: {
+                labels: metricsLabels,
+
+                datasets: [
+                    {
+                        label: "Hit Rate (%)",
+                        data: hitRateData,
+                        tension: 0.3
+                    },
+                    {
+                        label: "Cache Usage (%)",
+                        data: cacheUsageData,
+                        tension: 0.3
+                    }
+                ]
+            },
+
+            options: {
+                responsive: true,
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        }
+    );
 // Clear cache activity log
 async function clearActivity() {
 
