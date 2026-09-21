@@ -370,3 +370,86 @@ tr:hover {
     margin: 8px 0;
     font-size: 15px;
 }
+/* ===============================
+   Authentication / Login
+   =============================== */
+
+#loginSection {
+    width: 100%;
+    max-width: 420px;
+    margin: 80px auto;
+    padding: 35px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    box-sizing: border-box;
+}
+
+#loginSection h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 28px;
+}
+
+#loginSection input {
+    width: 100%;
+    padding: 13px 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+#loginSection input:focus {
+    border-color: #4a90e2;
+}
+
+#loginSection button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    background: #4a90e2;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#loginSection button:hover {
+    opacity: 0.9;
+}
+
+#loginMessage {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+    color: red;
+}
+
+/* Login page background */
+
+body.login-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Responsive login */
+
+@media (max-width: 500px) {
+
+    #loginSection {
+        width: calc(100% - 30px);
+        margin: 30px auto;
+        padding: 25px;
+    }
+
+    #loginSection h2 {
+        font-size: 24px;
+    }
+}

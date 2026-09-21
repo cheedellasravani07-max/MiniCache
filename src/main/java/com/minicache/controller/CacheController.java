@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 @RestController
 @RequestMapping("/cache")
+@SecurityRequirement(name = "bearerAuth")
 @CrossOrigin(origins = "*")
 public class CacheController {
 

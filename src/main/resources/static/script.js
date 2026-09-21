@@ -1,4 +1,12 @@
 const API_URL = "https://minicache-api.onrender.com";
+function getAuthHeaders() {
+    const token = localStorage.getItem("minicacheToken");
+
+    return {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+    };
+}
 // ===============================
 // Cache Activity Monitor
 // ===============================
@@ -97,9 +105,9 @@ async function checkBackendStatus() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache/stats`
-        );
+        const response = await fetch(`${API_URL}/cache/stats`, {
+            headers: getAuthHeaders()
+        });
 
         if (response.ok) {
 
@@ -149,9 +157,7 @@ async function setCache() {
             `${API_URL}/cache/key/${encodeURIComponent(key)}`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(data)
             }
         );
@@ -188,9 +194,9 @@ async function getCache() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(key)}`
-        );
+        const response = await fetch(`${API_URL}/cache/key/${key}`, {
+            headers: getAuthHeaders()
+        });
 
         if (response.ok) {
 
@@ -245,7 +251,8 @@ async function deleteCache() {
         const response = await fetch(
             `${API_URL}/cache/key/${encodeURIComponent(key)}`,
             {
-                method: "DELETE"
+                method: "DELETE",
+                headers: getAuthHeaders()
             }
         );
 
@@ -279,7 +286,8 @@ async function clearCache() {
         const response = await fetch(
             `${API_URL}/cache`,
             {
-                method: "DELETE"
+                method: "DELETE",
+                headers: getAuthHeaders()
             }
         );
 
@@ -305,7 +313,10 @@ async function loadStatistics() {
     try {
 
         const response = await fetch(
-            `${API_URL}/cache/stats`
+            `${API_URL}/cache/stats`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         const statistics = await response.json();
@@ -468,7 +479,10 @@ async function loadEntries() {
     try {
 
         const response = await fetch(
-            `${API_URL}/cache/entries`
+            `${API_URL}/cache/entries`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         const entries = await response.json();
@@ -504,7 +518,10 @@ async function loadActivity() {
     try {
 
         const response = await fetch(
-            `${API_URL}/cache/activity`
+            `${API_URL}/cache/activity`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         if (!response.ok) {
@@ -559,6 +576,7 @@ setInterval(checkBackendStatus, 10000);
 
 
 // Run LRU eviction demonstration
+
 async function runLRUDemo() {
 
     const resultElement =
@@ -571,7 +589,8 @@ async function runLRUDemo() {
 
         // Step 1: Clear the cache
         await fetch(`${API_URL}/cache`, {
-            method: "DELETE"
+            method: "DELETE",
+            headers: getAuthHeaders()
         });
 
         // Step 2: Add 100 entries
@@ -581,9 +600,7 @@ async function runLRUDemo() {
                 `${API_URL}/cache/key/demo-${i}`,
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({
                         value: `Demo Value ${i}`
                     })
@@ -594,7 +611,10 @@ async function runLRUDemo() {
         // Step 3: Access demo-1
         // This makes demo-1 the most recently used entry.
         await fetch(
-            `${API_URL}/cache/key/demo-1`
+            `${API_URL}/cache/key/demo-1`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         // Step 4: Add one more entry
@@ -603,9 +623,7 @@ async function runLRUDemo() {
             `${API_URL}/cache/key/demo-101`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({
                     value: "Demo Value 101"
                 })
@@ -614,7 +632,9 @@ async function runLRUDemo() {
 
         // Step 5: Get updated statistics
         const response =
-            await fetch(`${API_URL}/cache/stats`);
+            await fetch(`${API_URL}/cache/stats`, {
+                headers: getAuthHeaders()
+            });
 
         const statistics =
             await response.json();
@@ -671,9 +691,7 @@ async function runTTLDemo() {
             `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({
                     value: "TTL Demo Value",
                     ttl: ttl
@@ -691,7 +709,10 @@ async function runTTLDemo() {
 
         // Step 2: Confirm that the key exists
         const beforeResponse = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`
+            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         if (beforeResponse.ok) {
@@ -715,7 +736,10 @@ async function runTTLDemo() {
 
         // Step 4: Try to get the expired entry
         const afterResponse = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`
+            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         // Refresh dashboard
@@ -745,7 +769,7 @@ async function runTTLDemo() {
         );
     }
 }
-// Real-Time Metrics Chart
+//Real time metrics Chart
 
 const metricsLabels = [];
 const hitRateData = [];
@@ -802,6 +826,7 @@ async function clearActivity() {
 }
 loadActivity();
 // Load current LRU order
+
 async function loadLRUOrder() {
 
     const lruElement =
@@ -814,7 +839,9 @@ async function loadLRUOrder() {
     try {
 
         const response =
-            await fetch(`${API_URL}/cache/lru`);
+            await fetch(`${API_URL}/cache/lru`, {
+                headers: getAuthHeaders()
+            });
 
         if (!response.ok) {
             throw new Error("Failed to load LRU order");
@@ -875,7 +902,9 @@ async function checkCacheHealth() {
     try {
 
         const response =
-            await fetch(`${API_URL}/cache/health`);
+            await fetch(`${API_URL}/cache/health`, {
+                headers: getAuthHeaders()
+            });
 
         if (!response.ok) {
             throw new Error("Health check failed");
@@ -923,9 +952,7 @@ async function bulkSetCache() {
             `${API_URL}/cache/bulk`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(entries)
             }
         );
@@ -983,7 +1010,10 @@ async function runConcurrencyBenchmark() {
     try {
 
         const response = await fetch(
-            `${API_URL}/cache/benchmark/concurrency?requests=${encodeURIComponent(requests)}`
+            `${API_URL}/cache/benchmark/concurrency?requests=${encodeURIComponent(requests)}`,
+            {
+                headers: getAuthHeaders()
+            }
         );
 
         const data = await response.json();
@@ -1013,5 +1043,60 @@ async function runConcurrencyBenchmark() {
             "Concurrency benchmark error:",
             error
         );
+    }
+}
+async function login() {
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    const message = document.getElementById("loginMessage");
+
+    if (!username || !password) {
+        message.textContent = "Please enter username and password.";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+
+            localStorage.setItem("minicacheToken", data.token);
+            localStorage.setItem("minicacheUsername", data.username);
+
+            document.getElementById("loginSection").style.display = "none";
+
+            document.getElementById("dashboardSection").style.display = "block";
+
+            message.textContent = "";
+
+        } else {
+
+            message.textContent =
+                data.message || "Login failed.";
+
+        }
+
+    } catch (error) {
+
+        console.error("Login error:", error);
+
+        message.textContent =
+            "Unable to connect to backend.";
+
     }
 }

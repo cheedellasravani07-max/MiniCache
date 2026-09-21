@@ -13,7 +13,34 @@
 
 <body>
 
+<!-- Login Section -->
 
+<section id="loginSection" class="login-container">
+
+    <h1>MiniCache Login</h1>
+
+    <p>Sign in to access the MiniCache Dashboard</p>
+
+    <input
+            type="text"
+            id="username"
+            placeholder="Username"
+    >
+
+    <input
+            type="password"
+            id="password"
+            placeholder="Password"
+    >
+
+    <button onclick="login()">
+        Sign in
+    </button>
+
+    <p id="loginMessage"></p>
+
+</section>
+<div id="dashboardSection" style="display: none;">
 <header>
     <h1>MiniCache</h1>
     <p>In-Memory Cache Management Dashboard</p>
@@ -389,7 +416,7 @@
 
 
 </main>
-
+</div>
 <script src="script.js"></script>
 
 </body>
