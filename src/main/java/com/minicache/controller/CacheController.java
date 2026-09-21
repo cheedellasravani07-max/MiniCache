@@ -218,4 +218,31 @@ public class CacheController {
 
         return ResponseEntity.ok(health);
     }
+    @PostMapping("/bulk")
+    public ResponseEntity<String> bulkSet(
+            @RequestBody Map<String, String> entries) {
+
+        if (entries == null || entries.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("No entries provided");
+        }
+
+        for (Map.Entry<String, String> entry : entries.entrySet()) {
+
+            cache.set(
+                    entry.getKey(),
+                    entry.getValue()
+            );
+
+            addActivity(
+                    "BULK SET",
+                    entry.getKey(),
+                    "Success"
+            );
+        }
+
+        return ResponseEntity.ok(
+                entries.size() + " entries added successfully"
+        );
+    }
 }
