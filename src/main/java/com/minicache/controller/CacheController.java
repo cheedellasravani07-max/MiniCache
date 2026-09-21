@@ -204,4 +204,18 @@ public class CacheController {
                 cache.getLRUOrder()
         );
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> health() {
+
+        Map<String, Object> health = new HashMap<>();
+
+        health.put("status", "UP");
+        health.put("cacheSize", cache.size());
+        health.put("capacity", cache.getCapacity());
+        health.put("hits", cache.getCacheHits());
+        health.put("misses", cache.getCacheMisses());
+
+        return ResponseEntity.ok(health);
+    }
 }
