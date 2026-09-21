@@ -59,7 +59,19 @@ public class DoublyLinkedList<K, V> {
 
         return lastNode;
     }
+    public java.util.List<K> getKeysInOrder() {
 
+        java.util.List<K> keys = new java.util.ArrayList<>();
+
+        CacheNode<K, V> current = head;
+
+        while (current != null) {
+            keys.add(current.key);
+            current = current.next;
+        }
+
+        return keys;
+    }
     public void clear() {
         head = null;
         tail = null;

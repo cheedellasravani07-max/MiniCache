@@ -248,4 +248,8 @@ public class MiniCache<K, V> {
 
         return entries;
     }
+    // Get keys in LRU order
+    public synchronized java.util.List<K> getLRUOrder() {
+        return list.getKeysInOrder();
+    }
 }

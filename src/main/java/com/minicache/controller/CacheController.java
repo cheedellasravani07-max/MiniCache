@@ -197,4 +197,11 @@ public class CacheController {
                 new ArrayList<>(activityLog)
         );
     }
+    @GetMapping("/lru")
+    public ResponseEntity<List<String>> getLRUOrder() {
+
+        return ResponseEntity.ok(
+                cache.getLRUOrder()
+        );
+    }
 }
