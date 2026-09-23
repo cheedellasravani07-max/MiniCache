@@ -211,7 +211,7 @@ public class CacheController {
     }
     @GetMapping("/health")
     public ResponseEntity<String> health() {
-        return ResponseEntity.ok("OK");
+        return ResponseEntity.ok("UP");
     }
     @PostMapping("/bulk")
     public ResponseEntity<String> bulkSet(

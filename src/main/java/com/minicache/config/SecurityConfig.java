@@ -39,12 +39,15 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // Public endpoints
                         .requestMatchers(
                                 "/auth/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/cache/health"
                         ).permitAll()
 
+                        // All other cache APIs require JWT
                         .requestMatchers("/cache/**")
                         .authenticated()
 
