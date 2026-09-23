@@ -7,6 +7,6 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests
 
-EXPOSE 8080
+EXPOSE 10000
 
 CMD ["sh", "-c", "java -jar target/MiniCache-1.0-SNAPSHOT.jar"]
