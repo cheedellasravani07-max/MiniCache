@@ -7,6 +7,29 @@ function getAuthHeaders() {
         "Authorization": "Bearer " + token
     };
 }
+function handleUnauthorized(response) {
+
+    if (response.status === 401) {
+
+        // Remove expired/invalid JWT
+        localStorage.removeItem("minicacheToken");
+        localStorage.removeItem("minicacheUsername");
+
+        // Hide dashboard
+        document.getElementById("dashboardSection").style.display = "none";
+
+        // Show login
+        document.getElementById("loginSection").style.display = "block";
+
+        // Show message
+        document.getElementById("loginMessage").textContent =
+            "Session expired. Please login again.";
+
+        return true;
+    }
+
+    return false;
+}
 // ===============================
 // Cache Activity Monitor
 // ===============================
@@ -63,7 +86,9 @@ async function checkBackendStatus() {
         const response = await fetch(`${API_URL}/cache/stats`, {
             headers: getAuthHeaders()
         });
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         if (response.ok) {
 
             statusElement.textContent = "🟢 Online";
@@ -116,7 +141,9 @@ async function setCache() {
                 body: JSON.stringify(data)
             }
         );
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         const result = await response.text();
 
         alert(result);
@@ -151,7 +178,9 @@ async function getCache() {
         const response = await fetch(`${API_URL}/cache/key/${key}`, {
             headers: getAuthHeaders()
         });
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         if (response.ok) {
 
             const value = await response.text();
@@ -209,7 +238,9 @@ async function deleteCache() {
                 headers: getAuthHeaders()
             }
         );
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         const result = await response.text();
 
         resultElement.textContent = result;
@@ -244,7 +275,9 @@ async function clearCache() {
                 headers: getAuthHeaders()
             }
         );
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         const result = await response.text();
 
         resultElement.textContent = result;
@@ -271,7 +304,9 @@ async function loadStatistics() {
                 headers: getAuthHeaders()
             }
         );
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         const statistics = await response.json();
 
         document.getElementById("cacheSize").textContent =
@@ -431,7 +466,9 @@ async function loadEntries() {
                 headers: getAuthHeaders()
             }
         );
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         const entries = await response.json();
 
         const tableBody =
@@ -470,7 +507,9 @@ async function loadActivity() {
                 headers: getAuthHeaders()
             }
         );
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         if (!response.ok) {
             throw new Error("Failed to load activity");
         }
@@ -528,7 +567,9 @@ async function runLRUDemo() {
             method: "DELETE",
             headers: getAuthHeaders()
         });
-
+        if (handleUnauthorized(clearResponse)) {
+            return;
+        }
         // Step 2: Add 100 entries
         for (let i = 1; i <= 100; i++) {
 
@@ -770,7 +811,9 @@ async function loadLRUOrder() {
             await fetch(`${API_URL}/cache/lru`, {
                 headers: getAuthHeaders()
             });
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         if (!response.ok) {
             throw new Error("Failed to load LRU order");
         }
@@ -831,7 +874,9 @@ async function checkCacheHealth() {
             await fetch(`${API_URL}/cache/health`, {
                 headers: getAuthHeaders()
             });
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         if (!response.ok) {
             throw new Error("Health check failed");
         }
@@ -885,7 +930,9 @@ async function bulkSetCache() {
                 body: JSON.stringify(entries)
             }
         );
-
+        if (handleUnauthorized(response)) {
+            return;
+        }
         const result = await response.text();
 
         if (response.ok) {
@@ -942,6 +989,9 @@ async function runConcurrencyBenchmark() {
                 headers: getAuthHeaders()
             }
         );
+        if (handleUnauthorized(response)) {
+            return;
+        }
 
         const data = await response.json();
 
