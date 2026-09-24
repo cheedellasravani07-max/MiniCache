@@ -9,7 +9,7 @@ function getAuthHeaders() {
 }
 function handleUnauthorized(response) {
 
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 403) {
 
         // Remove expired/invalid JWT
         localStorage.removeItem("minicacheToken");
