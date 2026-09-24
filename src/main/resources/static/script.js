@@ -1240,6 +1240,8 @@ async function login() {
         return;
     }
 
+    message.textContent = "Signing in...";
+
     try {
 
         const response =
@@ -1257,20 +1259,29 @@ async function login() {
                 })
             });
 
-        const data = await response.json();
+        const data =
+            await response.json();
+
+        console.log("Login response:", data);
 
         if (response.ok && data.success) {
 
-            // Save JWT token
+            // Save access token
             localStorage.setItem(
                 "minicacheToken",
                 data.token
             );
 
-            localStorage.setItem(
-                "minicacheRefreshToken",
-                data.refreshToken
-            );
+            // Save refresh token ONLY if backend sends it
+            if (data.refreshToken) {
+
+                localStorage.setItem(
+                    "minicacheRefreshToken",
+                    data.refreshToken
+                );
+            }
+
+            // Save username
             localStorage.setItem(
                 "minicacheUsername",
                 data.username
@@ -1288,7 +1299,7 @@ async function login() {
 
             message.textContent = "";
 
-            // Start dashboard
+            // Load dashboard
             loadStatistics();
             loadEntries();
             loadActivity();
@@ -1296,17 +1307,19 @@ async function login() {
             checkBackendStatus();
             checkCacheHealth();
 
-            // Refresh dashboard
-            setInterval(loadStatistics, 2000);
-            setInterval(loadEntries, 2000);
-            setInterval(loadActivity, 2000);
-            setInterval(loadLRUOrder, 2000);
-            setInterval(checkBackendStatus, 10000);
-            setInterval(checkCacheHealth, 10000);
+            console.log(
+                "Login successful. Dashboard loaded."
+            );
+
         } else {
 
             message.textContent =
                 data.message || "Login failed.";
+
+            console.error(
+                "Login failed:",
+                data
+            );
         }
 
     } catch (error) {
