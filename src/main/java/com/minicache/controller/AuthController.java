@@ -93,10 +93,9 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-
-    // =========================
-    // LOGIN
-    // =========================
+// =========================
+// LOGIN
+// =========================
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(
@@ -124,18 +123,101 @@ public class AuthController {
                     .body(response);
         }
 
+        // Generate access token
         String token =
                 jwtService.generateToken(
+                        existingUser.getUsername()
+                );
+
+        // Generate refresh token
+        String refreshToken =
+                jwtService.generateRefreshToken(
                         existingUser.getUsername()
                 );
 
         response.put("success", true);
         response.put("message",
                 "Login successful");
+
         response.put("username",
                 existingUser.getUsername());
+
+        // Access token
         response.put("token", token);
 
+        // Refresh token
+        response.put("refreshToken",
+                refreshToken);
+
         return ResponseEntity.ok(response);
+    }
+// =========================
+// REFRESH TOKEN
+// =========================
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Map<String, Object>> refreshToken(
+            @RequestBody Map<String, String> request) {
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+        String refreshToken =
+                request.get("refreshToken");
+
+        if (refreshToken == null ||
+                refreshToken.isBlank()) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Refresh token is required");
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(response);
+        }
+
+        try {
+
+            if (!jwtService.isTokenValid(refreshToken)) {
+
+                response.put("success", false);
+                response.put("message",
+                        "Refresh token expired or invalid");
+
+                return ResponseEntity
+                        .status(401)
+                        .body(response);
+            }
+
+            String username =
+                    jwtService.extractUsername(
+                            refreshToken
+                    );
+
+            String newAccessToken =
+                    jwtService.generateToken(
+                            username
+                    );
+
+            response.put("success", true);
+            response.put("message",
+                    "Access token refreshed");
+
+            response.put("token",
+                    newAccessToken);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Invalid refresh token");
+
+            return ResponseEntity
+                    .status(401)
+                    .body(response);
+        }
     }
 }

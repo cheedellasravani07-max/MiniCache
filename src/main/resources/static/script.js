@@ -1069,6 +1069,10 @@ async function login() {
             );
 
             localStorage.setItem(
+                "minicacheRefreshToken",
+                data.refreshToken
+            );
+            localStorage.setItem(
                 "minicacheUsername",
                 data.username
             );
