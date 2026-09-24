@@ -1,14 +1,13 @@
 const API_URL = "https://minicache-api.onrender.com";
 
 
-// ===============================
-// Authentication Headers
-// ===============================
+// ======================================================
+// AUTHENTICATION
+// ======================================================
 
 function getAuthHeaders() {
 
-    const token =
-        localStorage.getItem("minicacheToken");
+    const token = localStorage.getItem("minicacheToken");
 
     return {
         "Content-Type": "application/json",
@@ -17,9 +16,9 @@ function getAuthHeaders() {
 }
 
 
-// ===============================
-// Refresh Access Token
-// ===============================
+// ======================================================
+// REFRESH ACCESS TOKEN
+// ======================================================
 
 async function refreshAccessToken() {
 
@@ -37,11 +36,9 @@ async function refreshAccessToken() {
             `${API_URL}/auth/refresh`,
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
-
                 body: JSON.stringify({
                     refreshToken: refreshToken
                 })
@@ -58,8 +55,7 @@ async function refreshAccessToken() {
             return false;
         }
 
-        const data =
-            await response.json();
+        const data = await response.json();
 
         if (data.success && data.token) {
 
@@ -68,7 +64,6 @@ async function refreshAccessToken() {
                 data.token
             );
 
-            // Save rotated refresh token if provided
             if (data.refreshToken) {
 
                 localStorage.setItem(
@@ -98,88 +93,42 @@ async function refreshAccessToken() {
 }
 
 
-// ===============================
-// Handle Unauthorized Response
-// ===============================
+// ======================================================
+// LOGOUT / SESSION EXPIRED
+// ======================================================
 
-async function handleUnauthorized(response) {
+function showLoginPage(messageText = "") {
 
-    if (
-        response.status !== 401 &&
-        response.status !== 403
-    ) {
-        return false;
-    }
-
-    console.log(
-        "Access token expired/invalid. Trying refresh..."
-    );
-
-    const refreshed =
-        await refreshAccessToken();
-
-    if (refreshed) {
-
-        console.log(
-            "Access token refreshed successfully."
-        );
-
-        return true;
-    }
-
-    // Refresh token failed
-    console.log(
-        "Refresh token expired/invalid."
-    );
-
-    localStorage.removeItem(
-        "minicacheToken"
-    );
-
-    localStorage.removeItem(
-        "minicacheRefreshToken"
-    );
-
-    localStorage.removeItem(
-        "minicacheUsername"
-    );
+    localStorage.removeItem("minicacheToken");
+    localStorage.removeItem("minicacheRefreshToken");
+    localStorage.removeItem("minicacheUsername");
 
     const dashboard =
-        document.getElementById(
-            "dashboardSection"
-        );
+        document.getElementById("dashboardSection");
 
-    const login =
-        document.getElementById(
-            "loginSection"
-        );
+    const loginSection =
+        document.getElementById("loginSection");
+
+    const message =
+        document.getElementById("loginMessage");
 
     if (dashboard) {
         dashboard.style.display = "none";
     }
 
-    if (login) {
-        login.style.display = "block";
+    if (loginSection) {
+        loginSection.style.display = "block";
     }
-
-    const message =
-        document.getElementById(
-            "loginMessage"
-        );
 
     if (message) {
-
-        message.textContent =
-            "Session expired. Please login again.";
+        message.textContent = messageText;
     }
-
-    return false;
 }
-     const data = await response.json();
 
-// ===============================
-// Authenticated Fetch
-// ===============================
+
+// ======================================================
+// AUTHENTICATED FETCH
+// ======================================================
 
 async function authenticatedFetch(
     url,
@@ -187,13 +136,40 @@ async function authenticatedFetch(
     retry = true
 ) {
 
+    const token =
+        localStorage.getItem("minicacheToken");
+
     options.headers = {
-        ...getAuthHeaders(),
+        "Content-Type": "application/json",
         ...(options.headers || {})
     };
 
-    let response =
-        await fetch(url, options);
+    if (token) {
+
+        options.headers["Authorization"] =
+            "Bearer " + token;
+    }
+
+    let response;
+
+    try {
+
+        response = await fetch(url, options);
+
+    } catch (error) {
+
+        console.error(
+            "Network error:",
+            error
+        );
+
+        throw error;
+    }
+
+
+    // --------------------------------------------------
+    // TOKEN EXPIRED
+    // --------------------------------------------------
 
     if (
         (response.status === 401 ||
@@ -202,7 +178,7 @@ async function authenticatedFetch(
     ) {
 
         console.log(
-            "Access token expired. Refreshing..."
+            "Access token expired/invalid. Refreshing..."
         );
 
         const refreshed =
@@ -214,34 +190,52 @@ async function authenticatedFetch(
                 "Retrying original request..."
             );
 
+            const newToken =
+                localStorage.getItem("minicacheToken");
+
             options.headers = {
-                ...getAuthHeaders(),
-                ...(options.headers || {})
+                "Content-Type": "application/json",
+                ...(options.headers || {}),
+                "Authorization":
+                    "Bearer " + newToken
             };
 
-            response =
-                await fetch(
-                    url,
-                    options
-                );
+            return authenticatedFetch(
+                url,
+                options,
+                false
+            );
         }
-        else {
 
-            await handleUnauthorized(response);
-        }
+        console.log(
+            "Refresh token failed. Login required."
+        );
+
+        showLoginPage(
+            "Session expired. Please login again."
+        );
     }
 
     return response;
 }
-// ===============================
-// Cache Activity Monitor
-// ===============================
+
+
+// ======================================================
+// ACTIVITY
+// ======================================================
 
 let activityLog = [];
-function addActivity(operation, key, status) {
+
+
+function addActivity(
+    operation,
+    key,
+    status
+) {
 
     const activityTable =
         document.getElementById("cacheActivity");
+
     if (!activityTable) {
         return;
     }
@@ -256,7 +250,6 @@ function addActivity(operation, key, status) {
         status: status
     });
 
-    // Keep only the latest 20 activities
     if (activityLog.length > 20) {
         activityLog.pop();
     }
@@ -278,35 +271,52 @@ function addActivity(operation, key, status) {
         activityTable.appendChild(row);
     });
 }
-// Check backend status
+
+
+// ======================================================
+// BACKEND STATUS
+// ======================================================
+
 async function checkBackendStatus() {
 
     const statusElement =
         document.getElementById("backendStatus");
 
+    if (!statusElement) {
+        return;
+    }
+
     try {
+
         const response =
             await authenticatedFetch(
                 `${API_URL}/cache/stats`
             );
-        if (await handleUnauthorized(response)) {
-            return;
-        }
+
         if (response.ok) {
 
-            statusElement.textContent = "🟢 Online";
-            statusElement.style.color = "green";
+            statusElement.textContent =
+                "🟢 Online";
+
+            statusElement.style.color =
+                "green";
 
         } else {
 
-            statusElement.textContent = "🔴 Offline";
-            statusElement.style.color = "red";
+            statusElement.textContent =
+                "🔴 Offline";
+
+            statusElement.style.color =
+                "red";
         }
 
     } catch (error) {
 
-        statusElement.textContent = "🔴 Offline";
-        statusElement.style.color = "red";
+        statusElement.textContent =
+            "🔴 Offline";
+
+        statusElement.style.color =
+            "red";
 
         console.error(
             "Backend status check failed:",
@@ -314,15 +324,29 @@ async function checkBackendStatus() {
         );
     }
 }
-// Add / Update cache entry
+
+
+// ======================================================
+// SET / UPDATE CACHE
+// ======================================================
+
 async function setCache() {
 
-    const key = document.getElementById("key").value;
-    const value = document.getElementById("value").value;
-    const ttl = document.getElementById("ttl").value;
+    const key =
+        document.getElementById("key").value.trim();
+
+    const value =
+        document.getElementById("value").value;
+
+    const ttl =
+        document.getElementById("ttl").value;
 
     if (!key || !value) {
-        alert("Please enter both key and value.");
+
+        alert(
+            "Please enter both key and value."
+        );
+
         return;
     }
 
@@ -331,7 +355,9 @@ async function setCache() {
     };
 
     if (ttl) {
-        data.ttl = Number(ttl);
+
+        data.ttl =
+            Number(ttl);
     }
 
     try {
@@ -344,35 +370,65 @@ async function setCache() {
                     body: JSON.stringify(data)
                 }
             );
-        if (await handleUnauthorized(response)) {
-            return;
-        }
-        const result = await response.text();
 
-        alert(result);
-        addActivity(
-            "SET",
-            key,
-            response.ok ? "Success" : "Failed"
-        );
+        const result =
+            await response.text();
+
+        if (response.ok) {
+
+            alert(result);
+
+            addActivity(
+                "SET",
+                key,
+                "Success"
+            );
+
+        } else {
+
+            alert(
+                "Failed: " + result
+            );
+
+            addActivity(
+                "SET",
+                key,
+                "Failed"
+            );
+        }
+
+        await loadStatistics();
+        await loadEntries();
+        await loadLRUOrder();
 
     } catch (error) {
 
-        alert("Unable to connect to the backend.");
+        alert(
+            "Unable to connect to backend."
+        );
 
         console.error(error);
     }
 }
 
 
-// Get cache entry
+// ======================================================
+// GET CACHE
+// ======================================================
+
 async function getCache() {
 
-    const key = document.getElementById("getKey").value;
-    const resultElement = document.getElementById("getResult");
+    const key =
+        document.getElementById("getKey").value.trim();
+
+    const resultElement =
+        document.getElementById("getResult");
 
     if (!key) {
-        resultElement.textContent = "Please enter a key.";
+
+        resultElement.textContent =
+            "Please enter a key.";
+
         return;
     }
 
@@ -382,12 +438,11 @@ async function getCache() {
             await authenticatedFetch(
                 `${API_URL}/cache/key/${encodeURIComponent(key)}`
             );
-        if (await handleUnauthorized(response)) {
-            return;
-        }
+
         if (response.ok) {
 
-            const value = await response.text();
+            const value =
+                await response.text();
 
             resultElement.textContent =
                 "Value: " + value;
@@ -410,30 +465,40 @@ async function getCache() {
             );
         }
 
-
+        await loadStatistics();
 
     } catch (error) {
 
         resultElement.textContent =
-            "Unable to connect to the backend.";
+            "Unable to connect to backend.";
 
         console.error(error);
     }
 }
 
 
-// Delete cache entry
+// ======================================================
+// DELETE CACHE ENTRY
+// ======================================================
+
 async function deleteCache() {
 
-    const key = document.getElementById("deleteKey").value;
-    const resultElement = document.getElementById("deleteResult");
+    const key =
+        document.getElementById("deleteKey").value.trim();
+
+    const resultElement =
+        document.getElementById("deleteResult");
 
     if (!key) {
-        resultElement.textContent = "Please enter a key.";
+
+        resultElement.textContent =
+            "Please enter a key.";
+
         return;
     }
 
     try {
+
         const response =
             await authenticatedFetch(
                 `${API_URL}/cache/key/${encodeURIComponent(key)}`,
@@ -442,34 +507,42 @@ async function deleteCache() {
                 }
             );
 
+        const result =
+            await response.text();
 
-        if (await handleUnauthorized(response)) {
-            return;
-        }
-        const result = await response.text();
+        resultElement.textContent =
+            result;
 
-        resultElement.textContent = result;
         addActivity(
             "DELETE",
             key,
-            response.ok ? "Success" : "Not Found"
+            response.ok
+                ? "Success"
+                : "Not Found"
         );
 
+        await loadStatistics();
+        await loadEntries();
+        await loadLRUOrder();
 
     } catch (error) {
 
         resultElement.textContent =
-            "Unable to connect to the backend.";
+            "Unable to connect to backend.";
 
         console.error(error);
     }
 }
 
 
-// Clear entire cache
+// ======================================================
+// CLEAR ENTIRE CACHE
+// ======================================================
+
 async function clearCache() {
 
-    const resultElement = document.getElementById("clearResult");
+    const resultElement =
+        document.getElementById("clearResult");
 
     try {
 
@@ -480,114 +553,210 @@ async function clearCache() {
                     method: "DELETE"
                 }
             );
-        if (await handleUnauthorized(response)) {
-            return;
-        }
-        const result = await response.text();
 
-        resultElement.textContent = result;
+        const result =
+            await response.text();
 
+        resultElement.textContent =
+            result;
+
+        await loadStatistics();
+        await loadEntries();
+        await loadLRUOrder();
 
     } catch (error) {
 
         resultElement.textContent =
-            "Unable to connect to the backend.";
+            "Unable to connect to backend.";
 
         console.error(error);
     }
 }
 
 
-// Load cache statistics
+// ======================================================
+// STATISTICS
+// ======================================================
+
 async function loadStatistics() {
 
     try {
 
-        const response = await authenticatedFetch(
-            `${API_URL}/cache/stats`
-        );
-        if (await handleUnauthorized(response)) {
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/stats`
+            );
+
+        if (!response.ok) {
             return;
         }
-        const statistics = await response.json();
 
-        document.getElementById("cacheSize").textContent =
-            statistics.size;
+        const statistics =
+            await response.json();
 
-        document.getElementById("capacity").textContent =
-            statistics.capacity;
 
-        document.getElementById("hits").textContent =
-            statistics.hits;
+        // Basic statistics
 
-        document.getElementById("misses").textContent =
-            statistics.misses;
+        const cacheSize =
+            document.getElementById("cacheSize");
 
-        document.getElementById("hitRate").textContent =
-            statistics.hitRate.toFixed(2) + "%";
+        const capacity =
+            document.getElementById("capacity");
 
-        document.getElementById("evictions").textContent =
-            statistics.evictions;
-        // Update performance summary
+        const hits =
+            document.getElementById("hits");
+
+        const misses =
+            document.getElementById("misses");
+
+        const hitRate =
+            document.getElementById("hitRate");
+
+        const evictions =
+            document.getElementById("evictions");
+
+
+        if (cacheSize)
+            cacheSize.textContent =
+                statistics.size;
+
+        if (capacity)
+            capacity.textContent =
+                statistics.capacity;
+
+        if (hits)
+            hits.textContent =
+                statistics.hits;
+
+        if (misses)
+            misses.textContent =
+                statistics.misses;
+
+        if (hitRate)
+            hitRate.textContent =
+                Number(statistics.hitRate || 0)
+                    .toFixed(2) + "%";
+
+        if (evictions)
+            evictions.textContent =
+                statistics.evictions;
+
+
+        // Performance
 
         const totalRequests =
-            statistics.hits + statistics.misses;
+            statistics.hits +
+            statistics.misses;
 
         const missRate =
             totalRequests === 0
                 ? 0
-                : (statistics.misses * 100) / totalRequests;
+                : (
+                    statistics.misses *
+                    100 /
+                    totalRequests
+                );
 
         const cacheUsage =
             statistics.capacity === 0
                 ? 0
-                : (statistics.size * 100) / statistics.capacity;
-
-        document.getElementById("totalRequests").textContent =
-            totalRequests;
-
-        document.getElementById("performanceHitRate").textContent =
-            statistics.hitRate.toFixed(2) + "%";
-
-        document.getElementById("missRate").textContent =
-            missRate.toFixed(2) + "%";
-
-        document.getElementById("cacheUsage").textContent =
-            cacheUsage.toFixed(2) + "%";
-
-        document.getElementById("performanceEvictions").textContent =
-            statistics.evictions;
+                : (
+                    statistics.size *
+                    100 /
+                    statistics.capacity
+                );
 
 
-// Performance message
+        const totalRequestsElement =
+            document.getElementById(
+                "totalRequests"
+            );
+
+        const performanceHitRate =
+            document.getElementById(
+                "performanceHitRate"
+            );
+
+        const missRateElement =
+            document.getElementById(
+                "missRate"
+            );
+
+        const cacheUsageElement =
+            document.getElementById(
+                "cacheUsage"
+            );
+
+        const performanceEvictions =
+            document.getElementById(
+                "performanceEvictions"
+            );
+
+
+        if (totalRequestsElement)
+            totalRequestsElement.textContent =
+                totalRequests;
+
+        if (performanceHitRate)
+            performanceHitRate.textContent =
+                Number(statistics.hitRate || 0)
+                    .toFixed(2) + "%";
+
+        if (missRateElement)
+            missRateElement.textContent =
+                missRate.toFixed(2) + "%";
+
+        if (cacheUsageElement)
+            cacheUsageElement.textContent =
+                cacheUsage.toFixed(2) + "%";
+
+        if (performanceEvictions)
+            performanceEvictions.textContent =
+                statistics.evictions;
+
+
+        // Performance message
 
         const performanceMessage =
-            document.getElementById("performanceMessage");
+            document.getElementById(
+                "performanceMessage"
+            );
 
-        if (totalRequests === 0) {
+        if (performanceMessage) {
 
-            performanceMessage.textContent =
-                "Waiting for cache activity...";
+            if (totalRequests === 0) {
 
-        } else if (statistics.hitRate >= 80) {
+                performanceMessage.textContent =
+                    "Waiting for cache activity...";
 
-            performanceMessage.textContent =
-                "Cache is serving requests efficiently.";
+            } else if (
+                statistics.hitRate >= 80
+            ) {
 
-        } else if (statistics.hitRate >= 50) {
+                performanceMessage.textContent =
+                    "Cache is serving requests efficiently.";
 
-            performanceMessage.textContent =
-                "Cache performance is moderate.";
+            } else if (
+                statistics.hitRate >= 50
+            ) {
 
-        } else {
+                performanceMessage.textContent =
+                    "Cache performance is moderate.";
 
-            performanceMessage.textContent =
-                "Cache has a high miss rate.";
+            } else {
+
+                performanceMessage.textContent =
+                    "Cache has a high miss rate.";
+            }
         }
-        // Update Cache Health
+
+
+        // Cache health
 
         const healthElement =
-            document.getElementById("cacheHealth");
+            document.getElementById(
+                "cacheHealth"
+            );
 
         if (healthElement) {
 
@@ -596,12 +765,16 @@ async function loadStatistics() {
                 healthElement.textContent =
                     "⚪ No Activity";
 
-            } else if (statistics.hitRate >= 80) {
+            } else if (
+                statistics.hitRate >= 80
+            ) {
 
                 healthElement.textContent =
                     "🟢 Healthy";
 
-            } else if (statistics.hitRate >= 50) {
+            } else if (
+                statistics.hitRate >= 50
+            ) {
 
                 healthElement.textContent =
                     "🟡 Moderate";
@@ -612,39 +785,30 @@ async function loadStatistics() {
                     "🔴 High Miss Rate";
             }
         }
-        const now = new Date();
 
-        document.getElementById("lastUpdated").textContent =
-            now.toLocaleTimeString();
-// Update real-time metrics chart
 
-        metricsLabels.push(
-            now.toLocaleTimeString()
-        );
+        // Last updated
 
-        hitRateData.push(
-            statistics.hitRate
-        );
+        const lastUpdated =
+            document.getElementById(
+                "lastUpdated"
+            );
 
-        const usage =
-            statistics.capacity === 0
-                ? 0
-                : (statistics.size * 100) / statistics.capacity;
+        if (lastUpdated) {
 
-        cacheUsageData.push(
-            Number(usage.toFixed(2))
-        );
-
-// Keep only the latest 10 points
-
-        if (metricsLabels.length > 10) {
-
-            metricsLabels.shift();
-            hitRateData.shift();
-            cacheUsageData.shift();
+            lastUpdated.textContent =
+                new Date()
+                    .toLocaleTimeString();
         }
 
-        metricsChart.update();
+
+        // Chart
+
+        updateMetricsChart(
+            Number(statistics.hitRate || 0),
+            cacheUsage
+        );
+
     } catch (error) {
 
         console.error(
@@ -654,10 +818,11 @@ async function loadStatistics() {
     }
 }
 
-// Statistics will start after successful login
 
+// ======================================================
+// CACHE ENTRIES
+// ======================================================
 
-// Load current cache entries
 async function loadEntries() {
 
     try {
@@ -666,19 +831,29 @@ async function loadEntries() {
             await authenticatedFetch(
                 `${API_URL}/cache/entries`
             );
-        if (await handleUnauthorized(response)) {
+
+        if (!response.ok) {
             return;
         }
-        const entries = await response.json();
+
+        const entries =
+            await response.json();
 
         const tableBody =
-            document.getElementById("cacheEntries");
+            document.getElementById(
+                "cacheEntries"
+            );
+
+        if (!tableBody) {
+            return;
+        }
 
         tableBody.innerHTML = "";
 
         for (const key in entries) {
 
-            const row = document.createElement("tr");
+            const row =
+                document.createElement("tr");
 
             row.innerHTML = `
                 <td>${key}</td>
@@ -696,7 +871,12 @@ async function loadEntries() {
         );
     }
 }
-// Load real cache activity from backend
+
+
+// ======================================================
+// CACHE ACTIVITY
+// ======================================================
+
 async function loadActivity() {
 
     try {
@@ -705,20 +885,20 @@ async function loadActivity() {
             await authenticatedFetch(
                 `${API_URL}/cache/activity`
             );
-        if (await handleUnauthorized(response)) {
+
+        if (!response.ok) {
             return;
         }
-        if (!response.ok) {
-            throw new Error("Failed to load activity");
-        }
 
-        const activities = await response.json();
+        const activities =
+            await response.json();
 
         const tableBody =
-            document.getElementById("cacheActivity");
+            document.getElementById(
+                "cacheActivity"
+            );
 
         if (!tableBody) {
-            console.error("cacheActivity element not found");
             return;
         }
 
@@ -726,7 +906,8 @@ async function loadActivity() {
 
         activities.forEach(activity => {
 
-            const row = document.createElement("tr");
+            const row =
+                document.createElement("tr");
 
             row.innerHTML = `
                 <td>${activity.time}</td>
@@ -748,71 +929,91 @@ async function loadActivity() {
 }
 
 
-// Run LRU eviction demonstration
+// ======================================================
+// LRU DEMO
+// ======================================================
 
 async function runLRUDemo() {
 
     const resultElement =
-        document.getElementById("lruDemoResult");
+        document.getElementById(
+            "lruDemoResult"
+        );
+
+    if (!resultElement) {
+        return;
+    }
 
     resultElement.textContent =
         "Running LRU demonstration...";
 
     try {
 
-        const clearResponse = await fetch(
-            `${API_URL}/cache`,
-            {
-                method: "DELETE",
-                headers: getAuthHeaders()
-            }
-        );
+        // Clear cache
 
-        if (await handleUnauthorized(clearResponse)) {
-            return;
+        const clearResponse =
+            await authenticatedFetch(
+                `${API_URL}/cache`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+        if (!clearResponse.ok) {
+            throw new Error(
+                "Unable to clear cache."
+            );
         }
-        // Step 2: Add 100 entries
-        for (let i = 1; i <= 100; i++) {
 
-            await fetch(
+
+        // Add 100 entries
+
+        for (
+            let i = 1;
+            i <= 100;
+            i++
+        ) {
+
+            await authenticatedFetch(
                 `${API_URL}/cache/key/demo-${i}`,
                 {
                     method: "POST",
-                    headers: getAuthHeaders(),
                     body: JSON.stringify({
-                        value: `Demo Value ${i}`
+                        value:
+                            `Demo Value ${i}`
                     })
                 }
             );
         }
 
-        // Step 3: Access demo-1
-        // This makes demo-1 the most recently used entry.
-        await fetch(
-            `${API_URL}/cache/key/demo-1`,
-            {
-                headers: getAuthHeaders()
-            }
+
+        // Access demo-1
+
+        await authenticatedFetch(
+            `${API_URL}/cache/key/demo-1`
         );
 
-        // Step 4: Add one more entry
-        // This should evict the least recently used entry.
-        await fetch(
+
+        // Add demo-101
+
+        await authenticatedFetch(
             `${API_URL}/cache/key/demo-101`,
             {
                 method: "POST",
-                headers: getAuthHeaders(),
                 body: JSON.stringify({
-                    value: "Demo Value 101"
+                    value:
+                        "Demo Value 101"
                 })
             }
         );
 
-        // Step 5: Get updated statistics
+
+        // Get statistics
+
         const response =
-            await fetch(`${API_URL}/cache/stats`, {
-                headers: getAuthHeaders()
-            });
+            await authenticatedFetch(
+                `${API_URL}/cache/stats`
+            );
 
         const statistics =
             await response.json();
@@ -822,7 +1023,9 @@ async function runLRUDemo() {
             `Cache Size: ${statistics.size}, ` +
             `Evictions: ${statistics.evictions}`;
 
-
+        await loadEntries();
+        await loadLRUOrder();
+        await loadStatistics();
 
     } catch (error) {
 
@@ -835,16 +1038,31 @@ async function runLRUDemo() {
         );
     }
 }
-// Run TTL expiry demonstration
+
+
+// ======================================================
+// TTL DEMO
+// ======================================================
+
 async function runTTLDemo() {
 
     const ttlInput =
-        document.getElementById("ttlDemoInput");
+        document.getElementById(
+            "ttlDemoInput"
+        );
 
     const resultElement =
-        document.getElementById("ttlDemoResult");
+        document.getElementById(
+            "ttlDemoResult"
+        );
 
-    const ttl = Number(ttlInput.value);
+    if (!ttlInput || !resultElement) {
+        return;
+    }
+
+    const ttl =
+        Number(ttlInput.value);
+
 
     if (!ttl || ttl < 1000) {
 
@@ -854,48 +1072,50 @@ async function runTTLDemo() {
         return;
     }
 
+
     const demoKey =
         "ttl-demo-" + Date.now();
 
+
     try {
 
-        // Step 1: Create a cache entry with TTL
         resultElement.textContent =
             `Creating cache entry with TTL of ${ttl} ms...`;
 
-        const setResponse = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
-            {
-                method: "POST",
-                headers: getAuthHeaders(),
-                body: JSON.stringify({
-                    value: "TTL Demo Value",
-                    ttl: ttl
-                })
-            }
-        );
+
+        // Create entry
+
+        const setResponse =
+            await authenticatedFetch(
+                `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        value:
+                            "TTL Demo Value",
+                        ttl: ttl
+                    })
+                }
+            );
+
 
         if (!setResponse.ok) {
-            throw new Error("Failed to create TTL demo entry.");
+
+            throw new Error(
+                "Failed to create TTL demo entry."
+            );
         }
 
 
+        // Verify entry
 
-        // Step 2: Confirm that the key exists
-        const beforeResponse = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
-            {
-                headers: getAuthHeaders()
-            }
-        );
+        const beforeResponse =
+            await authenticatedFetch(
+                `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`
+            );
 
-        if (beforeResponse.ok) {
 
-            resultElement.textContent =
-                `Entry created successfully. ` +
-                `Waiting ${ttl / 1000} seconds for expiration...`;
-
-        } else {
+        if (!beforeResponse.ok) {
 
             resultElement.textContent =
                 "Unable to verify TTL entry.";
@@ -903,18 +1123,29 @@ async function runTTLDemo() {
             return;
         }
 
-        // Step 3: Wait until TTL expires
-        await new Promise(resolve =>
-            setTimeout(resolve, ttl + 500)
+
+        resultElement.textContent =
+            `Entry created successfully. ` +
+            `Waiting ${ttl / 1000} seconds for expiration...`;
+
+
+        // Wait
+
+        await new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    ttl + 500
+                )
         );
 
-        // Step 4: Try to get the expired entry
-        const afterResponse = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
-            {
-                headers: getAuthHeaders()
-            }
-        );
+
+        // Check again
+
+        const afterResponse =
+            await authenticatedFetch(
+                `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`
+            );
 
 
         if (!afterResponse.ok) {
@@ -929,6 +1160,10 @@ async function runTTLDemo() {
                 "TTL expiration did not occur as expected.";
         }
 
+
+        await loadStatistics();
+        await loadEntries();
+
     } catch (error) {
 
         resultElement.textContent =
@@ -940,67 +1175,182 @@ async function runTTLDemo() {
         );
     }
 }
-//Real time metrics Chart
+
+
+// ======================================================
+// CHART
+// ======================================================
 
 const metricsLabels = [];
 const hitRateData = [];
 const cacheUsageData = [];
 
-const metricsChart =
-    new Chart(
-        document.getElementById("metricsChart"),
-        {
-            type: "line",
+let metricsChart = null;
 
-            data: {
-                labels: metricsLabels,
 
-                datasets: [
-                    {
-                        label: "Hit Rate (%)",
-                        data: hitRateData,
-                        tension: 0.3
-                    },
-                    {
-                        label: "Cache Usage (%)",
-                        data: cacheUsageData,
-                        tension: 0.3
-                    }
-                ]
-            },
+function initializeMetricsChart() {
 
-            options: {
-                responsive: true,
+    const canvas =
+        document.getElementById(
+            "metricsChart"
+        );
 
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
+    if (!canvas) {
+        console.log(
+            "metricsChart canvas not found."
+        );
+        return;
+    }
+
+    if (
+        typeof Chart ===
+        "undefined"
+    ) {
+
+        console.error(
+            "Chart.js is not loaded."
+        );
+
+        return;
+    }
+
+    metricsChart =
+        new Chart(
+            canvas,
+            {
+                type: "line",
+
+                data: {
+
+                    labels:
+                    metricsLabels,
+
+                    datasets: [
+
+                        {
+                            label:
+                                "Hit Rate (%)",
+
+                            data:
+                            hitRateData,
+
+                            tension:
+                                0.3
+                        },
+
+                        {
+                            label:
+                                "Cache Usage (%)",
+
+                            data:
+                            cacheUsageData,
+
+                            tension:
+                                0.3
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero:
+                                true,
+
+                            max:
+                                100
+                        }
                     }
                 }
             }
-        }
+        );
+}
+
+
+function updateMetricsChart(
+    hitRate,
+    cacheUsage
+) {
+
+    if (!metricsChart) {
+        return;
+    }
+
+    const now =
+        new Date()
+            .toLocaleTimeString();
+
+    metricsLabels.push(now);
+
+    hitRateData.push(hitRate);
+
+    cacheUsageData.push(
+        Number(
+            cacheUsage.toFixed(2)
+        )
     );
-// Clear cache activity log
+
+
+    if (
+        metricsLabels.length >
+        10
+    ) {
+
+        metricsLabels.shift();
+
+        hitRateData.shift();
+
+        cacheUsageData.shift();
+    }
+
+
+    metricsChart.update();
+}
+
+
+// ======================================================
+// CLEAR ACTIVITY
+// ======================================================
+
 async function clearActivity() {
 
-    const activityLog =
-        document.getElementById("activityLog");
+    const activityTable =
+        document.getElementById(
+            "cacheActivity"
+        );
 
-    activityLog.innerHTML = `
+    if (!activityTable) {
+        return;
+    }
+
+    activityTable.innerHTML = `
         <tr>
             <td colspan="4">
                 No activity yet
             </td>
         </tr>
     `;
+
+    activityLog = [];
 }
-// Load current LRU order
+
+
+// ======================================================
+// LRU ORDER
+// ======================================================
 
 async function loadLRUOrder() {
 
     const lruElement =
-        document.getElementById("lruOrder");
+        document.getElementById(
+            "lruOrder"
+        );
 
     if (!lruElement) {
         return;
@@ -1012,17 +1362,19 @@ async function loadLRUOrder() {
             await authenticatedFetch(
                 `${API_URL}/cache/lru`
             );
-        if (await handleUnauthorized(response)) {
-            return;
-        }
+
         if (!response.ok) {
-            throw new Error("Failed to load LRU order");
+            return;
         }
 
         const lruKeys =
             await response.json();
 
-        if (lruKeys.length === 0) {
+
+        if (
+            !Array.isArray(lruKeys) ||
+            lruKeys.length === 0
+        ) {
 
             lruElement.textContent =
                 "Cache is empty.";
@@ -1030,24 +1382,29 @@ async function loadLRUOrder() {
             return;
         }
 
+
         lruElement.innerHTML =
-            lruKeys.map((key, index) => {
+            lruKeys
+                .map(
+                    (key, index) => {
 
-                const label =
-                    index === 0
-                        ? "🟢 MRU"
-                        : index === lruKeys.length - 1
-                            ? "🔴 LRU"
-                            : "";
+                        const label =
+                            index === 0
+                                ? "🟢 MRU"
+                                : index ===
+                                lruKeys.length - 1
+                                    ? "🔴 LRU"
+                                    : "";
 
-                return `
-                    <div class="lru-item">
-                        <span>${label}</span>
-                        <strong>${key}</strong>
-                    </div>
-                `;
-
-            }).join("");
+                        return `
+                            <div class="lru-item">
+                                <span>${label}</span>
+                                <strong>${key}</strong>
+                            </div>
+                        `;
+                    }
+                )
+                .join("");
 
     } catch (error) {
 
@@ -1060,10 +1417,18 @@ async function loadLRUOrder() {
             "Unable to load LRU order.";
     }
 }
+
+
+// ======================================================
+// CACHE HEALTH
+// ======================================================
+
 async function checkCacheHealth() {
 
     const healthElement =
-        document.getElementById("cacheHealth");
+        document.getElementById(
+            "cacheHealth"
+        );
 
     if (!healthElement) {
         return;
@@ -1075,14 +1440,17 @@ async function checkCacheHealth() {
             await authenticatedFetch(
                 `${API_URL}/cache/health`
             );
-        if (await handleUnauthorized(response)) {
+
+        if (!response.ok) {
+
+            healthElement.textContent =
+                "🔴 Down";
+
             return;
         }
-        if (!response.ok) {
-            throw new Error("Health check failed");
-        }
 
-        const data = await response.text();
+        const data =
+            await response.text();
 
         if (data === "UP") {
 
@@ -1102,14 +1470,22 @@ async function checkCacheHealth() {
     }
 }
 
-// Bulk cache operation
+
+// ======================================================
+// BULK CACHE
+// ======================================================
+
 async function bulkSetCache() {
 
     const input =
-        document.getElementById("bulkEntries").value;
+        document.getElementById(
+            "bulkEntries"
+        ).value;
 
     const resultElement =
-        document.getElementById("bulkResult");
+        document.getElementById(
+            "bulkResult"
+        );
 
     if (!input.trim()) {
 
@@ -1121,7 +1497,9 @@ async function bulkSetCache() {
 
     try {
 
-        const entries = JSON.parse(input);
+        const entries =
+            JSON.parse(input);
+
 
         const response =
             await authenticatedFetch(
@@ -1131,22 +1509,28 @@ async function bulkSetCache() {
                     body: JSON.stringify(entries)
                 }
             );
-        if (await handleUnauthorized(response)) {
-            return;
-        }
-        const result = await response.text();
+
+
+        const result =
+            await response.text();
+
 
         if (response.ok) {
 
             resultElement.textContent =
                 result;
 
-
         } else {
 
             resultElement.textContent =
-                "Bulk operation failed: " + result;
+                "Bulk operation failed: " +
+                result;
         }
+
+
+        await loadStatistics();
+        await loadEntries();
+        await loadLRUOrder();
 
     } catch (error) {
 
@@ -1159,19 +1543,32 @@ async function bulkSetCache() {
         );
     }
 }
-// Run concurrency benchmark
+
+
+// ======================================================
+// CONCURRENCY BENCHMARK
+// ======================================================
+
 async function runConcurrencyBenchmark() {
 
     const requestsInput =
-        document.getElementById("benchmarkRequests");
+        document.getElementById(
+            "benchmarkRequests"
+        );
 
     const resultElement =
-        document.getElementById("benchmarkResult");
+        document.getElementById(
+            "benchmarkResult"
+        );
 
     const requests =
         requestsInput.value.trim();
 
-    if (!requests || Number(requests) <= 0) {
+
+    if (
+        !requests ||
+        Number(requests) <= 0
+    ) {
 
         resultElement.textContent =
             "Please enter a valid number of requests.";
@@ -1179,8 +1576,10 @@ async function runConcurrencyBenchmark() {
         return;
     }
 
+
     resultElement.textContent =
         "Running benchmark...";
+
 
     try {
 
@@ -1188,25 +1587,40 @@ async function runConcurrencyBenchmark() {
             await authenticatedFetch(
                 `${API_URL}/cache/benchmark/concurrency?requests=${encodeURIComponent(requests)}`
             );
-        if (await handleUnauthorized(response)) {
-            return;
-        }
 
-        const data = await response.json();
+
+        const data =
+            await response.json();
+
 
         if (!response.ok) {
 
             resultElement.textContent =
-                data.error || "Benchmark failed.";
+                data.error ||
+                "Benchmark failed.";
 
             return;
         }
 
+
         resultElement.innerHTML = `
             <div class="benchmark-results">
-                <p><strong>Requests:</strong> ${data.requests}</p>
-                <p><strong>Execution Time:</strong> ${data.durationMs} ms</p>
-                <p><strong>Requests/Second:</strong> ${data.requestsPerSecond}</p>
+
+                <p>
+                    <strong>Requests:</strong>
+                    ${data.requests}
+                </p>
+
+                <p>
+                    <strong>Execution Time:</strong>
+                    ${data.durationMs} ms
+                </p>
+
+                <p>
+                    <strong>Requests/Second:</strong>
+                    ${data.requestsPerSecond}
+                </p>
+
             </div>
         `;
 
@@ -1221,16 +1635,36 @@ async function runConcurrencyBenchmark() {
         );
     }
 }
+
+
+// ======================================================
+// LOGIN
+// ======================================================
+
 async function login() {
 
-    const username =
-        document.getElementById("username").value.trim();
+    const usernameElement =
+        document.getElementById(
+            "username"
+        );
 
-    const password =
-        document.getElementById("password").value;
+    const passwordElement =
+        document.getElementById(
+            "password"
+        );
 
     const message =
-        document.getElementById("loginMessage");
+        document.getElementById(
+            "loginMessage"
+        );
+
+
+    const username =
+        usernameElement.value.trim();
+
+    const password =
+        passwordElement.value;
+
 
     if (!username || !password) {
 
@@ -1240,39 +1674,66 @@ async function login() {
         return;
     }
 
-    message.textContent = "Signing in...";
+
+    message.textContent =
+        "Signing in...";
+
 
     try {
 
         const response =
-            await fetch(`${API_URL}/auth/login`, {
+            await fetch(
+                `${API_URL}/auth/login`,
+                {
+                    method: "POST",
 
-                method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    body:
+                        JSON.stringify({
+                            username:
+                            username,
 
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            });
+                            password:
+                            password
+                        })
+                }
+            );
+
 
         const data =
             await response.json();
 
-        console.log("Login response:", data);
 
-        if (response.ok && data.success) {
+        console.log(
+            "Login response:",
+            data
+        );
 
-            // Save access token
+
+        if (
+            response.ok &&
+            data.success &&
+            data.token
+        ) {
+
+            // ------------------------------------------
+            // SAVE ACCESS TOKEN
+            // ------------------------------------------
+
             localStorage.setItem(
                 "minicacheToken",
                 data.token
             );
 
-            // Save refresh token ONLY if backend sends it
+
+            // ------------------------------------------
+            // SAVE REFRESH TOKEN
+            // ------------------------------------------
+
             if (data.refreshToken) {
 
                 localStorage.setItem(
@@ -1281,46 +1742,91 @@ async function login() {
                 );
             }
 
-            // Save username
+
+            // ------------------------------------------
+            // SAVE USERNAME
+            // ------------------------------------------
+
             localStorage.setItem(
                 "minicacheUsername",
-                data.username
+                data.username ||
+                username
             );
 
-            // Hide login
-            document.getElementById(
-                "loginSection"
-            ).style.display = "none";
 
-            // Show dashboard
-            document.getElementById(
-                "dashboardSection"
-            ).style.display = "block";
+            // ------------------------------------------
+            // HIDE LOGIN
+            // ------------------------------------------
+
+            const loginSection =
+                document.getElementById(
+                    "loginSection"
+                );
+
+            const dashboardSection =
+                document.getElementById(
+                    "dashboardSection"
+                );
+
+
+            if (loginSection) {
+
+                loginSection.style.display =
+                    "none";
+            }
+
+
+            if (dashboardSection) {
+
+                dashboardSection.style.display =
+                    "block";
+            }
+
 
             message.textContent = "";
 
-            // Load dashboard
-            loadStatistics();
-            loadEntries();
-            loadActivity();
-            loadLRUOrder();
-            checkBackendStatus();
-            checkCacheHealth();
+
+            // ------------------------------------------
+            // INITIALIZE CHART
+            // ------------------------------------------
+
+            initializeMetricsChart();
+
+
+            // ------------------------------------------
+            // LOAD DASHBOARD
+            // ------------------------------------------
+
+            await loadStatistics();
+
+            await loadEntries();
+
+            await loadActivity();
+
+            await loadLRUOrder();
+
+            await checkBackendStatus();
+
+            await checkCacheHealth();
+
 
             console.log(
                 "Login successful. Dashboard loaded."
             );
 
+
         } else {
 
             message.textContent =
-                data.message || "Login failed.";
+                data.message ||
+                "Login failed.";
 
             console.error(
                 "Login failed:",
                 data
             );
         }
+
 
     } catch (error) {
 
@@ -1333,29 +1839,200 @@ async function login() {
             "Unable to connect to backend.";
     }
 }
+
+
+// ======================================================
+// LOGOUT
+// ======================================================
+
 function logout() {
 
-    // Remove access token
-    localStorage.removeItem("minicacheToken");
+    localStorage.removeItem(
+        "minicacheToken"
+    );
 
-    // Remove refresh token
-    localStorage.removeItem("minicacheRefreshToken");
+    localStorage.removeItem(
+        "minicacheRefreshToken"
+    );
 
-    // Remove username
-    localStorage.removeItem("minicacheUsername");
+    localStorage.removeItem(
+        "minicacheUsername"
+    );
 
-    // Hide dashboard
-    document.getElementById("dashboardSection").style.display = "none";
 
-    // Show login page
-    document.getElementById("loginSection").style.display = "block";
+    const dashboard =
+        document.getElementById(
+            "dashboardSection"
+        );
 
-    // Clear login fields
-    document.getElementById("username").value = "";
-    document.getElementById("password").value = "";
+    const loginSection =
+        document.getElementById(
+            "loginSection"
+        );
 
-    // Clear login message
-    document.getElementById("loginMessage").textContent = "";
 
-    console.log("User logged out successfully");
+    if (dashboard) {
+
+        dashboard.style.display =
+            "none";
+    }
+
+
+    if (loginSection) {
+
+        loginSection.style.display =
+            "block";
+    }
+
+
+    const username =
+        document.getElementById(
+            "username"
+        );
+
+    const password =
+        document.getElementById(
+            "password"
+        );
+
+    const message =
+        document.getElementById(
+            "loginMessage"
+        );
+
+
+    if (username)
+        username.value = "";
+
+    if (password)
+        password.value = "";
+
+    if (message)
+        message.textContent = "";
+
+
+    console.log(
+        "User logged out successfully."
+    );
 }
+
+
+// ======================================================
+// PAGE INITIALIZATION
+// ======================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        console.log(
+            "MiniCache JavaScript loaded successfully."
+        );
+
+
+        // Initialize chart if dashboard
+        // is already visible
+
+        const dashboard =
+            document.getElementById(
+                "dashboardSection"
+            );
+
+        if (
+            dashboard &&
+            dashboard.style.display !== "none"
+        ) {
+
+            initializeMetricsChart();
+        }
+
+
+        // ------------------------------------------------
+        // Check existing login
+        // ------------------------------------------------
+
+        const token =
+            localStorage.getItem(
+                "minicacheToken"
+            );
+
+        if (token) {
+
+            const loginSection =
+                document.getElementById(
+                    "loginSection"
+                );
+
+            const dashboardSection =
+                document.getElementById(
+                    "dashboardSection"
+                );
+
+
+            if (loginSection) {
+
+                loginSection.style.display =
+                    "none";
+            }
+
+
+            if (dashboardSection) {
+
+                dashboardSection.style.display =
+                    "block";
+            }
+
+
+            initializeMetricsChart();
+
+            loadStatistics();
+            loadEntries();
+            loadActivity();
+            loadLRUOrder();
+            checkBackendStatus();
+            checkCacheHealth();
+        }
+
+
+        // ------------------------------------------------
+        // Automatic refresh
+        // ------------------------------------------------
+
+        setInterval(
+            () => {
+
+                if (
+                    localStorage.getItem(
+                        "minicacheToken"
+                    )
+                ) {
+
+                    loadStatistics();
+                    loadEntries();
+                    loadActivity();
+                    loadLRUOrder();
+                }
+
+            },
+            2000
+        );
+
+
+        setInterval(
+            () => {
+
+                if (
+                    localStorage.getItem(
+                        "minicacheToken"
+                    )
+                ) {
+
+                    checkBackendStatus();
+                    checkCacheHealth();
+                }
+
+            },
+            10000
+        );
+    }
+);
