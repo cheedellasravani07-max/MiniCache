@@ -73,42 +73,46 @@ async function refreshAccessToken() {
 }
 async function handleUnauthorized(response) {
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status !== 401 && response.status !== 403) {
+        return false;
+    }
 
-        const refreshed =
-            await refreshAccessToken();
+    // Try to refresh the access token
+    const refreshed = await refreshAccessToken();
 
-        if (refreshed) {
-
-            console.log(
-                "Access token refreshed. Retrying request..."
-            );
-
-            return false;
-        }
-
-        // Refresh token also failed
-        localStorage.removeItem("minicacheToken");
-        localStorage.removeItem("minicacheRefreshToken");
-        localStorage.removeItem("minicacheUsername");
-
-        document.getElementById(
-            "dashboardSection"
-        ).style.display = "none";
-
-        document.getElementById(
-            "loginSection"
-        ).style.display = "block";
-
-        document.getElementById(
-            "loginMessage"
-        ).textContent =
-            "Session expired. Please login again.";
-
+    if (refreshed) {
+        console.log("Access token refreshed successfully.");
         return true;
     }
 
-    return false;
+    // Refresh token also failed
+    localStorage.removeItem("minicacheToken");
+    localStorage.removeItem("minicacheRefreshToken");
+    localStorage.removeItem("minicacheUsername");
+
+    const dashboard =
+        document.getElementById("dashboardSection");
+
+    const login =
+        document.getElementById("loginSection");
+
+    if (dashboard) {
+        dashboard.style.display = "none";
+    }
+
+    if (login) {
+        login.style.display = "block";
+    }
+
+    const message =
+        document.getElementById("loginMessage");
+
+    if (message) {
+        message.textContent =
+            "Session expired. Please login again.";
+    }
+
+    return true;
 }
 async function refreshAccessToken() {
 
@@ -690,11 +694,14 @@ async function runLRUDemo() {
 
     try {
 
-        // Step 1: Clear the cache
-        await fetch(`${API_URL}/cache`, {
-            method: "DELETE",
-            headers: getAuthHeaders()
-        });
+        const clearResponse = await fetch(
+            `${API_URL}/cache`,
+            {
+                method: "DELETE",
+                headers: getAuthHeaders()
+            }
+        );
+
         if (await handleUnauthorized(clearResponse)) {
             return;
         }
