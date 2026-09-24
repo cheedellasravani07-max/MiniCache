@@ -15,11 +15,11 @@ public class JwtService {
     private static final String SECRET =
             "MiniCacheAuthenticationSecretKey2026ForJWT123456";
 
-    // Access token: 1 hour
+    // Access token = 15 minutes
     private static final long ACCESS_TOKEN_EXPIRATION =
-            1000 * 60 * 60;
+            1000L * 60 * 15;
 
-    // Refresh token: 7 days
+    // Refresh token = 7 days
     private static final long REFRESH_TOKEN_EXPIRATION =
             1000L * 60 * 60 * 24 * 7;
 
@@ -28,55 +28,56 @@ public class JwtService {
                     SECRET.getBytes(StandardCharsets.UTF_8)
             );
 
-    // ==========================================
-    // Generate Access Token
-    // ==========================================
+    // =========================
+    // ACCESS TOKEN
+    // =========================
 
     public String generateToken(String username) {
 
-        Date now = new Date();
-
-        Date expiration =
-                new Date(
-                        now.getTime()
-                                + ACCESS_TOKEN_EXPIRATION
-                );
-
-        return Jwts.builder()
-                .subject(username)
-                .claim("type", "access")
-                .issuedAt(now)
-                .expiration(expiration)
-                .signWith(secretKey)
-                .compact();
+        return generateToken(
+                username,
+                ACCESS_TOKEN_EXPIRATION
+        );
     }
 
-    // ==========================================
-    // Generate Refresh Token
-    // ==========================================
+    // =========================
+    // REFRESH TOKEN
+    // =========================
 
     public String generateRefreshToken(String username) {
 
+        return generateToken(
+                username,
+                REFRESH_TOKEN_EXPIRATION
+        );
+    }
+
+    // =========================
+    // GENERATE TOKEN
+    // =========================
+
+    private String generateToken(
+            String username,
+            long expirationTime) {
+
         Date now = new Date();
 
         Date expiration =
                 new Date(
-                        now.getTime()
-                                + REFRESH_TOKEN_EXPIRATION
+                        now.getTime() + expirationTime
                 );
 
         return Jwts.builder()
                 .subject(username)
-                .claim("type", "refresh")
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)
                 .compact();
     }
 
-    // ==========================================
-    // Extract Username
-    // ==========================================
+    // =========================
+    // EXTRACT USERNAME
+    // =========================
 
     public String extractUsername(String token) {
 
@@ -84,21 +85,18 @@ public class JwtService {
                 .getSubject();
     }
 
-    // ==========================================
-    // Validate Access Token
-    // ==========================================
+    // =========================
+    // VALIDATE TOKEN
+    // =========================
 
     public boolean isTokenValid(String token) {
 
         try {
 
-            Claims claims = getClaims(token);
+            Claims claims =
+                    getClaims(token);
 
-            String type =
-                    claims.get("type", String.class);
-
-            return "access".equals(type)
-                    && claims.getExpiration()
+            return claims.getExpiration()
                     .after(new Date());
 
         } catch (Exception e) {
@@ -107,32 +105,9 @@ public class JwtService {
         }
     }
 
-    // ==========================================
-    // Validate Refresh Token
-    // ==========================================
-
-    public boolean isRefreshTokenValid(String token) {
-
-        try {
-
-            Claims claims = getClaims(token);
-
-            String type =
-                    claims.get("type", String.class);
-
-            return "refresh".equals(type)
-                    && claims.getExpiration()
-                    .after(new Date());
-
-        } catch (Exception e) {
-
-            return false;
-        }
-    }
-
-    // ==========================================
-    // Get JWT Claims
-    // ==========================================
+    // =========================
+    // GET CLAIMS
+    // =========================
 
     private Claims getClaims(String token) {
 

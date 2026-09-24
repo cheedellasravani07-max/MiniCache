@@ -7,22 +7,102 @@ function getAuthHeaders() {
         "Authorization": "Bearer " + token
     };
 }
-function handleUnauthorized(response) {
+async function refreshAccessToken() {
+
+    const refreshToken =
+        localStorage.getItem("minicacheRefreshToken");
+
+    if (!refreshToken) {
+        return false;
+    }
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/auth/refresh`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    refreshToken: refreshToken
+                })
+            }
+        );
+
+        if (!response.ok) {
+            return false;
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.token) {
+
+            // Save new access token
+            localStorage.setItem(
+                "minicacheToken",
+                data.token
+            );
+
+            // Save new refresh token if backend sends one
+            if (data.refreshToken) {
+
+                localStorage.setItem(
+                    "minicacheRefreshToken",
+                    data.refreshToken
+                );
+            }
+
+            console.log("JWT refreshed successfully");
+
+            return true;
+        }
+
+        return false;
+
+    } catch (error) {
+
+        console.error(
+            "Token refresh failed:",
+            error
+        );
+
+        return false;
+    }
+}
+async function handleUnauthorized(response) {
 
     if (response.status === 401 || response.status === 403) {
 
-        // Remove expired/invalid JWT
+        const refreshed =
+            await refreshAccessToken();
+
+        if (refreshed) {
+
+            console.log(
+                "Access token refreshed. Retrying request..."
+            );
+
+            return false;
+        }
+
+        // Refresh token also failed
         localStorage.removeItem("minicacheToken");
+        localStorage.removeItem("minicacheRefreshToken");
         localStorage.removeItem("minicacheUsername");
 
-        // Hide dashboard
-        document.getElementById("dashboardSection").style.display = "none";
+        document.getElementById(
+            "dashboardSection"
+        ).style.display = "none";
 
-        // Show login
-        document.getElementById("loginSection").style.display = "block";
+        document.getElementById(
+            "loginSection"
+        ).style.display = "block";
 
-        // Show message
-        document.getElementById("loginMessage").textContent =
+        document.getElementById(
+            "loginMessage"
+        ).textContent =
             "Session expired. Please login again.";
 
         return true;
@@ -86,7 +166,7 @@ async function checkBackendStatus() {
         const response = await fetch(`${API_URL}/cache/stats`, {
             headers: getAuthHeaders()
         });
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         if (response.ok) {
@@ -141,7 +221,7 @@ async function setCache() {
                 body: JSON.stringify(data)
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         const result = await response.text();
@@ -178,7 +258,7 @@ async function getCache() {
         const response = await fetch(`${API_URL}/cache/key/${key}`, {
             headers: getAuthHeaders()
         });
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         if (response.ok) {
@@ -238,7 +318,7 @@ async function deleteCache() {
                 headers: getAuthHeaders()
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         const result = await response.text();
@@ -275,7 +355,7 @@ async function clearCache() {
                 headers: getAuthHeaders()
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         const result = await response.text();
@@ -304,7 +384,7 @@ async function loadStatistics() {
                 headers: getAuthHeaders()
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         const statistics = await response.json();
@@ -466,7 +546,7 @@ async function loadEntries() {
                 headers: getAuthHeaders()
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         const entries = await response.json();
@@ -507,7 +587,7 @@ async function loadActivity() {
                 headers: getAuthHeaders()
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         if (!response.ok) {
@@ -567,7 +647,7 @@ async function runLRUDemo() {
             method: "DELETE",
             headers: getAuthHeaders()
         });
-        if (handleUnauthorized(clearResponse)) {
+        if (await handleUnauthorized(clearResponse)) {
             return;
         }
         // Step 2: Add 100 entries
@@ -811,7 +891,7 @@ async function loadLRUOrder() {
             await fetch(`${API_URL}/cache/lru`, {
                 headers: getAuthHeaders()
             });
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         if (!response.ok) {
@@ -874,7 +954,7 @@ async function checkCacheHealth() {
             await fetch(`${API_URL}/cache/health`, {
                 headers: getAuthHeaders()
             });
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         if (!response.ok) {
@@ -930,7 +1010,7 @@ async function bulkSetCache() {
                 body: JSON.stringify(entries)
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
         const result = await response.text();
@@ -989,7 +1069,7 @@ async function runConcurrencyBenchmark() {
                 headers: getAuthHeaders()
             }
         );
-        if (handleUnauthorized(response)) {
+        if (await handleUnauthorized(response)) {
             return;
         }
 
@@ -1123,8 +1203,11 @@ async function login() {
 }
 function logout() {
 
-    // Remove JWT token
+    // Remove access token
     localStorage.removeItem("minicacheToken");
+
+    // Remove refresh token
+    localStorage.removeItem("minicacheRefreshToken");
 
     // Remove username
     localStorage.removeItem("minicacheUsername");
