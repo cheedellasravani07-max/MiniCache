@@ -1,18 +1,33 @@
 const API_URL = "https://minicache-api.onrender.com";
+
+
+// ===============================
+// Authentication Headers
+// ===============================
+
 function getAuthHeaders() {
-    const token = localStorage.getItem("minicacheToken");
+
+    const token =
+        localStorage.getItem("minicacheToken");
 
     return {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
     };
 }
+
+
+// ===============================
+// Refresh Access Token
+// ===============================
+
 async function refreshAccessToken() {
 
     const refreshToken =
         localStorage.getItem("minicacheRefreshToken");
 
     if (!refreshToken) {
+        console.log("No refresh token available.");
         return false;
     }
 
@@ -22,9 +37,11 @@ async function refreshAccessToken() {
             `${API_URL}/auth/refresh`,
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json"
                 },
+
                 body: JSON.stringify({
                     refreshToken: refreshToken
                 })
@@ -32,20 +49,26 @@ async function refreshAccessToken() {
         );
 
         if (!response.ok) {
+
+            console.error(
+                "Refresh request failed:",
+                response.status
+            );
+
             return false;
         }
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
         if (data.success && data.token) {
 
-            // Save new access token
             localStorage.setItem(
                 "minicacheToken",
                 data.token
             );
 
-            // Save new refresh token if backend sends one
+            // Save rotated refresh token if provided
             if (data.refreshToken) {
 
                 localStorage.setItem(
@@ -54,7 +77,9 @@ async function refreshAccessToken() {
                 );
             }
 
-            console.log("JWT refreshed successfully");
+            console.log(
+                "Access token refreshed successfully."
+            );
 
             return true;
         }
@@ -71,30 +96,63 @@ async function refreshAccessToken() {
         return false;
     }
 }
+
+
+// ===============================
+// Handle Unauthorized Response
+// ===============================
+
 async function handleUnauthorized(response) {
 
-    if (response.status !== 401 && response.status !== 403) {
+    if (
+        response.status !== 401 &&
+        response.status !== 403
+    ) {
         return false;
     }
 
-    // Try to refresh the access token
-    const refreshed = await refreshAccessToken();
+    console.log(
+        "Access token expired/invalid. Trying refresh..."
+    );
+
+    const refreshed =
+        await refreshAccessToken();
 
     if (refreshed) {
-        console.log("Access token refreshed successfully.");
+
+        console.log(
+            "Access token refreshed successfully."
+        );
+
         return true;
     }
 
-    // Refresh token also failed
-    localStorage.removeItem("minicacheToken");
-    localStorage.removeItem("minicacheRefreshToken");
-    localStorage.removeItem("minicacheUsername");
+    // Refresh token failed
+    console.log(
+        "Refresh token expired/invalid."
+    );
+
+    localStorage.removeItem(
+        "minicacheToken"
+    );
+
+    localStorage.removeItem(
+        "minicacheRefreshToken"
+    );
+
+    localStorage.removeItem(
+        "minicacheUsername"
+    );
 
     const dashboard =
-        document.getElementById("dashboardSection");
+        document.getElementById(
+            "dashboardSection"
+        );
 
     const login =
-        document.getElementById("loginSection");
+        document.getElementById(
+            "loginSection"
+        );
 
     if (dashboard) {
         dashboard.style.display = "none";
@@ -105,62 +163,75 @@ async function handleUnauthorized(response) {
     }
 
     const message =
-        document.getElementById("loginMessage");
+        document.getElementById(
+            "loginMessage"
+        );
 
     if (message) {
+
         message.textContent =
             "Session expired. Please login again.";
     }
 
-    return true;
+    return false;
 }
-async function refreshAccessToken() {
+     const data = await response.json();
 
-    const refreshToken =
-        localStorage.getItem("minicacheRefreshToken");
+// ===============================
+// Authenticated Fetch
+// ===============================
 
-    if (!refreshToken) {
-        return false;
-    }
+async function authenticatedFetch(
+    url,
+    options = {},
+    retry = true
+) {
 
-    try {
+    options.headers = {
+        ...getAuthHeaders(),
+        ...(options.headers || {})
+    };
 
-        const response = await fetch(
-            `${API_URL}/auth/refresh`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    refreshToken: refreshToken
-                })
-            }
+    let response =
+        await fetch(url, options);
+
+    if (
+        (response.status === 401 ||
+            response.status === 403) &&
+        retry
+    ) {
+
+        console.log(
+            "Access token expired. Refreshing..."
         );
 
-        const data = await response.json();
+        const refreshed =
+            await refreshAccessToken();
 
-        if (response.ok && data.success) {
+        if (refreshed) {
 
-            localStorage.setItem(
-                "minicacheToken",
-                data.token
+            console.log(
+                "Retrying original request..."
             );
 
-            return true;
+            options.headers = {
+                ...getAuthHeaders(),
+                ...(options.headers || {})
+            };
+
+            response =
+                await fetch(
+                    url,
+                    options
+                );
         }
+        else {
 
-        return false;
-
-    } catch (error) {
-
-        console.error(
-            "Token refresh failed:",
-            error
-        );
-
-        return false;
+            await handleUnauthorized(response);
+        }
     }
+
+    return response;
 }
 // ===============================
 // Cache Activity Monitor
@@ -214,10 +285,10 @@ async function checkBackendStatus() {
         document.getElementById("backendStatus");
 
     try {
-
-        const response = await fetch(`${API_URL}/cache/stats`, {
-            headers: getAuthHeaders()
-        });
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/stats`
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -265,14 +336,14 @@ async function setCache() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(key)}`,
-            {
-                method: "POST",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(data)
-            }
-        );
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/key/${encodeURIComponent(key)}`,
+                {
+                    method: "POST",
+                    body: JSON.stringify(data)
+                }
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -307,9 +378,10 @@ async function getCache() {
 
     try {
 
-        const response = await fetch(`${API_URL}/cache/key/${key}`, {
-            headers: getAuthHeaders()
-        });
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/key/${encodeURIComponent(key)}`
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -362,14 +434,15 @@ async function deleteCache() {
     }
 
     try {
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/key/${encodeURIComponent(key)}`,
+                {
+                    method: "DELETE"
+                }
+            );
 
-        const response = await fetch(
-            `${API_URL}/cache/key/${encodeURIComponent(key)}`,
-            {
-                method: "DELETE",
-                headers: getAuthHeaders()
-            }
-        );
+
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -400,13 +473,13 @@ async function clearCache() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache`,
-            {
-                method: "DELETE",
-                headers: getAuthHeaders()
-            }
-        );
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache`,
+                {
+                    method: "DELETE"
+                }
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -430,11 +503,8 @@ async function loadStatistics() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache/stats`,
-            {
-                headers: getAuthHeaders()
-            }
+        const response = await authenticatedFetch(
+            `${API_URL}/cache/stats`
         );
         if (await handleUnauthorized(response)) {
             return;
@@ -592,12 +662,10 @@ async function loadEntries() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache/entries`,
-            {
-                headers: getAuthHeaders()
-            }
-        );
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/entries`
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -633,12 +701,10 @@ async function loadActivity() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache/activity`,
-            {
-                headers: getAuthHeaders()
-            }
-        );
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/activity`
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -943,9 +1009,9 @@ async function loadLRUOrder() {
     try {
 
         const response =
-            await fetch(`${API_URL}/cache/lru`, {
-                headers: getAuthHeaders()
-            });
+            await authenticatedFetch(
+                `${API_URL}/cache/lru`
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -1006,9 +1072,9 @@ async function checkCacheHealth() {
     try {
 
         const response =
-            await fetch(`${API_URL}/cache/health`, {
-                headers: getAuthHeaders()
-            });
+            await authenticatedFetch(
+                `${API_URL}/cache/health`
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -1057,14 +1123,14 @@ async function bulkSetCache() {
 
         const entries = JSON.parse(input);
 
-        const response = await fetch(
-            `${API_URL}/cache/bulk`,
-            {
-                method: "POST",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(entries)
-            }
-        );
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/bulk`,
+                {
+                    method: "POST",
+                    body: JSON.stringify(entries)
+                }
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
@@ -1118,12 +1184,10 @@ async function runConcurrencyBenchmark() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/cache/benchmark/concurrency?requests=${encodeURIComponent(requests)}`,
-            {
-                headers: getAuthHeaders()
-            }
-        );
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/benchmark/concurrency?requests=${encodeURIComponent(requests)}`
+            );
         if (await handleUnauthorized(response)) {
             return;
         }
