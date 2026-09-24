@@ -12,55 +12,10 @@ function getAuthHeaders() {
 // ===============================
 
 let activityLog = [];
-async function loadActivity() {
-    try {
-        const response = await fetch(`${API_URL}/cache/activity`);
-
-        if (!response.ok) {
-            throw new Error("Failed to load activity");
-        }
-
-        const activities = await response.json();
-
-        const activityTable = document.getElementById("activityLog");
-
-        if (!activityTable) {
-            return;
-        }
-
-        activityTable.innerHTML = "";
-
-        if (activities.length === 0) {
-            activityTable.innerHTML = `
-                <tr>
-                    <td colspan="4">No activity yet</td>
-                </tr>
-            `;
-            return;
-        }
-
-        activities.forEach(activity => {
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-                <td>${activity.time}</td>
-                <td>${activity.operation}</td>
-                <td>${activity.key}</td>
-                <td>${activity.status}</td>
-            `;
-
-            activityTable.appendChild(row);
-        });
-
-    } catch (error) {
-        console.error("Activity loading error:", error);
-    }
-}
 function addActivity(operation, key, status) {
 
     const activityTable =
-        document.getElementById("activityLog");
-
+        document.getElementById("cacheActivity");
     if (!activityTable) {
         return;
     }
@@ -170,7 +125,6 @@ async function setCache() {
             key,
             response.ok ? "Success" : "Failed"
         );
-        loadStatistics();
 
     } catch (error) {
 
@@ -223,7 +177,7 @@ async function getCache() {
             );
         }
 
-        loadStatistics();
+
 
     } catch (error) {
 
@@ -264,7 +218,7 @@ async function deleteCache() {
             key,
             response.ok ? "Success" : "Not Found"
         );
-        loadStatistics();
+
 
     } catch (error) {
 
@@ -295,7 +249,6 @@ async function clearCache() {
 
         resultElement.textContent = result;
 
-        loadStatistics();
 
     } catch (error) {
 
@@ -464,15 +417,9 @@ async function loadStatistics() {
     }
 }
 
+// Statistics will start after successful login
 
 
-// Load statistics when page opens
-loadStatistics();
-checkBackendStatus();
-
-
-// Automatically refresh statistics every 2 seconds
-setInterval(loadStatistics, 2000);
 // Load current cache entries
 async function loadEntries() {
 
@@ -562,17 +509,6 @@ async function loadActivity() {
         );
     }
 }
-// Load entries when page opens
-loadEntries();
-// Load cache activity when page opens
-loadActivity();
-
-// Automatically refresh entries every 2 seconds
-setInterval(loadEntries, 2000);
-// Automatically refresh activity every 2 seconds
-setInterval(loadActivity, 2000);
-// Check backend status every 5 seconds
-setInterval(checkBackendStatus, 10000);
 
 
 // Run LRU eviction demonstration
@@ -644,9 +580,7 @@ async function runLRUDemo() {
             `Cache Size: ${statistics.size}, ` +
             `Evictions: ${statistics.evictions}`;
 
-        // Refresh dashboard
-        loadStatistics();
-        loadEntries();
+
 
     } catch (error) {
 
@@ -703,9 +637,7 @@ async function runTTLDemo() {
             throw new Error("Failed to create TTL demo entry.");
         }
 
-        // Refresh dashboard
-        loadStatistics();
-        loadEntries();
+
 
         // Step 2: Confirm that the key exists
         const beforeResponse = await fetch(
@@ -742,9 +674,6 @@ async function runTTLDemo() {
             }
         );
 
-        // Refresh dashboard
-        loadStatistics();
-        loadEntries();
 
         if (!afterResponse.ok) {
 
@@ -824,7 +753,6 @@ async function clearActivity() {
         </tr>
     `;
 }
-loadActivity();
 // Load current LRU order
 
 async function loadLRUOrder() {
@@ -888,8 +816,6 @@ async function loadLRUOrder() {
             "Unable to load LRU order.";
     }
 }
-loadLRUOrder();
-setInterval(loadLRUOrder, 2000);
 async function checkCacheHealth() {
 
     const healthElement =
@@ -910,23 +836,26 @@ async function checkCacheHealth() {
             throw new Error("Health check failed");
         }
 
-        const data = await response.json();
+        const data = await response.text();
 
-        if (data.status === "UP") {
+        if (data === "UP") {
 
-            healthElement.textContent = "Healthy";
+            healthElement.textContent =
+                "🟢 Healthy";
 
         } else {
 
-            healthElement.textContent = "Down";
+            healthElement.textContent =
+                "🔴 Down";
         }
 
     } catch (error) {
 
-        healthElement.textContent = "Backend Offline";
+        healthElement.textContent =
+            "🔴 Backend Offline";
     }
 }
-checkCacheHealth();
+
 // Bulk cache operation
 async function bulkSetCache() {
 
@@ -964,8 +893,6 @@ async function bulkSetCache() {
             resultElement.textContent =
                 result;
 
-            loadStatistics();
-            loadEntries();
 
         } else {
 
@@ -1047,56 +974,96 @@ async function runConcurrencyBenchmark() {
 }
 async function login() {
 
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+    const username =
+        document.getElementById("username").value.trim();
 
-    const message = document.getElementById("loginMessage");
+    const password =
+        document.getElementById("password").value;
+
+    const message =
+        document.getElementById("loginMessage");
 
     if (!username || !password) {
-        message.textContent = "Please enter username and password.";
+
+        message.textContent =
+            "Please enter username and password.";
+
         return;
     }
 
     try {
-        const response = await fetch(`${API_URL}/auth/login`, {
-            method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+        const response =
+            await fetch(`${API_URL}/auth/login`, {
 
-            body: JSON.stringify({
-                username: username,
-                password: password
-            })
-        });
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
 
         const data = await response.json();
 
         if (response.ok && data.success) {
 
-            localStorage.setItem("minicacheToken", data.token);
-            localStorage.setItem("minicacheUsername", data.username);
+            // Save JWT token
+            localStorage.setItem(
+                "minicacheToken",
+                data.token
+            );
 
-            document.getElementById("loginSection").style.display = "none";
+            localStorage.setItem(
+                "minicacheUsername",
+                data.username
+            );
 
-            document.getElementById("dashboardSection").style.display = "block";
+            // Hide login
+            document.getElementById(
+                "loginSection"
+            ).style.display = "none";
+
+            // Show dashboard
+            document.getElementById(
+                "dashboardSection"
+            ).style.display = "block";
 
             message.textContent = "";
 
+            // Start dashboard
+            loadStatistics();
+            loadEntries();
+            loadActivity();
+            loadLRUOrder();
+            checkBackendStatus();
+            checkCacheHealth();
+
+            // Refresh dashboard
+            setInterval(loadStatistics, 2000);
+            setInterval(loadEntries, 2000);
+            setInterval(loadActivity, 2000);
+            setInterval(loadLRUOrder, 2000);
+            setInterval(checkBackendStatus, 10000);
+            setInterval(checkCacheHealth, 10000);
         } else {
 
             message.textContent =
                 data.message || "Login failed.";
-
         }
 
     } catch (error) {
 
-        console.error("Login error:", error);
+        console.error(
+            "Login error:",
+            error
+        );
 
         message.textContent =
             "Unable to connect to backend.";
-
     }
 }
