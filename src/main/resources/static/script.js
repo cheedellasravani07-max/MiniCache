@@ -1067,3 +1067,26 @@ async function login() {
             "Unable to connect to backend.";
     }
 }
+function logout() {
+
+    // Remove JWT token
+    localStorage.removeItem("minicacheToken");
+
+    // Remove username
+    localStorage.removeItem("minicacheUsername");
+
+    // Hide dashboard
+    document.getElementById("dashboardSection").style.display = "none";
+
+    // Show login page
+    document.getElementById("loginSection").style.display = "block";
+
+    // Clear login fields
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+
+    // Clear login message
+    document.getElementById("loginMessage").textContent = "";
+
+    console.log("User logged out successfully");
+}
