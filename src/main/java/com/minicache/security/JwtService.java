@@ -8,13 +8,12 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-
+import org.springframework.beans.factory.annotation.Value;
 @Service
 public class JwtService {
 
-    private static final String SECRET =
-            "MiniCacheAuthenticationSecretKey2026ForJWT123456";
-
+    @Value("${JWT_SECRET}")
+    private String secret;
     // Access token = 15 minutes
     private static final long ACCESS_TOKEN_EXPIRATION =
             1000L * 60 * 15;
@@ -23,10 +22,12 @@ public class JwtService {
     private static final long REFRESH_TOKEN_EXPIRATION =
             1000L * 60 * 60 * 24 * 7;
 
-    private final SecretKey secretKey =
-            Keys.hmacShaKeyFor(
-                    SECRET.getBytes(StandardCharsets.UTF_8)
-            );
+    private SecretKey getSecretKey() {
+
+        return Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
+    }
 
     // =========================
     // ACCESS TOKEN
@@ -71,7 +72,7 @@ public class JwtService {
                 .subject(username)
                 .issuedAt(now)
                 .expiration(expiration)
-                .signWith(secretKey)
+                .signWith(getSecretKey())
                 .compact();
     }
 
@@ -112,7 +113,7 @@ public class JwtService {
     private Claims getClaims(String token) {
 
         return Jwts.parser()
-                .verifyWith(secretKey)
+                .verifyWith(getSecretKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
