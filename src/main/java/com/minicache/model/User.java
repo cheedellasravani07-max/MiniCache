@@ -17,7 +17,8 @@ public class User {
     private String password;
     @Column(nullable = true)
     private String email;
-
+    @Column(nullable = false)
+    private boolean emailVerified = false;
     public User() {
     }
 
@@ -53,5 +54,12 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 }

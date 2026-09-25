@@ -1,16 +1,17 @@
 package com.minicache.controller;
 
+import com.minicache.model.EmailVerificationToken;
 import com.minicache.model.User;
 import com.minicache.model.PasswordResetToken;
 import com.minicache.repository.UserRepository;
 import com.minicache.repository.PasswordResetTokenRepository;
 import com.minicache.security.JwtService;
 import com.minicache.dto.ResetPasswordRequest;
-
+import com.minicache.repository.EmailVerificationTokenRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
+import com.minicache.service.EmailService;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,18 +26,26 @@ public class AuthController {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final EmailService emailService;
     public AuthController(
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             UserRepository userRepository,
-            PasswordResetTokenRepository passwordResetTokenRepository) {
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailVerificationTokenRepository emailVerificationTokenRepository,
+            EmailService emailService ) {
 
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.passwordResetTokenRepository =
                 passwordResetTokenRepository;
+        this.emailVerificationTokenRepository =
+                emailVerificationTokenRepository;
+
+        this.emailService =
+                emailService;
     }
 
     // =========================
@@ -97,9 +106,37 @@ public class AuthController {
 
         userRepository.save(newUser);
 
+// Generate email verification token
+        String verificationToken =
+                UUID.randomUUID().toString();
+
+        LocalDateTime expiryTime =
+                LocalDateTime.now().plusMinutes(15);
+
+        EmailVerificationToken emailVerificationToken =
+                new EmailVerificationToken(
+                        verificationToken,
+                        user.getUsername(),
+                        expiryTime
+                );
+
+        emailVerificationTokenRepository
+                .save(emailVerificationToken);
+
+// Create verification link
+        String verificationLink =
+                "https://minicache-frontend.onrender.com/verify-email?token="
+                        + verificationToken;
+
+// Send verification email
+        emailService.sendVerificationEmail(
+                user.getEmail(),
+                verificationLink
+        );
+
         response.put("success", true);
         response.put("message",
-                "User registered successfully");
+                "Registration successful. Please check your email to verify your account.");
 
         return ResponseEntity.ok(response);
     }
@@ -133,7 +170,16 @@ public class AuthController {
                     .status(401)
                     .body(response);
         }
+        if (!existingUser.isEmailVerified()) {
 
+            response.put("success", false);
+            response.put("message",
+                    "Please verify your email before logging in.");
+
+            return ResponseEntity
+                    .status(403)
+                    .body(response);
+        }
         // Generate access token
         String token =
                 jwtService.generateToken(
@@ -418,6 +464,100 @@ public class AuthController {
         response.put("success", true);
         response.put("message",
                 "Password reset successful");
+
+        return ResponseEntity.ok(response);
+    }
+    // =========================
+// VERIFY EMAIL
+// =========================
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmail(
+            @RequestParam String token) {
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+        if (token == null || token.isBlank()) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Verification token is required");
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(response);
+        }
+
+        EmailVerificationToken verificationToken =
+                emailVerificationTokenRepository
+                        .findByToken(token)
+                        .orElse(null);
+
+        if (verificationToken == null) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Invalid verification token");
+
+            return ResponseEntity
+                    .status(400)
+                    .body(response);
+        }
+
+        if (verificationToken.isUsed()) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Email has already been verified");
+
+            return ResponseEntity
+                    .status(400)
+                    .body(response);
+        }
+
+        if (verificationToken.getExpiryTime()
+                .isBefore(LocalDateTime.now())) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Verification token has expired");
+
+            return ResponseEntity
+                    .status(400)
+                    .body(response);
+        }
+
+        User user =
+                userRepository
+                        .findByUsername(
+                                verificationToken.getUsername()
+                        )
+                        .orElse(null);
+
+        if (user == null) {
+
+            response.put("success", false);
+            response.put("message",
+                    "User not found");
+
+            return ResponseEntity
+                    .status(404)
+                    .body(response);
+        }
+
+        user.setEmailVerified(true);
+
+        userRepository.save(user);
+
+        verificationToken.setUsed(true);
+
+        emailVerificationTokenRepository
+                .save(verificationToken);
+
+        response.put("success", true);
+        response.put("message",
+                "Email verified successfully");
 
         return ResponseEntity.ok(response);
     }

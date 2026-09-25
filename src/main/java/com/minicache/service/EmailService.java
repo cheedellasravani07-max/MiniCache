@@ -46,4 +46,33 @@ public class EmailService {
 
         mailSender.send(message);
     }
+    public void sendVerificationEmail(
+            String toEmail,
+            String verificationLink) {
+
+        SimpleMailMessage message =
+                new SimpleMailMessage();
+
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+
+        message.setSubject(
+                "MiniCache - Verify Your Email"
+        );
+
+        message.setText(
+                "Hello,\n\n" +
+                        "Welcome to MiniCache!\n\n" +
+                        "Please verify your email address by clicking the link below:\n\n" +
+                        verificationLink +
+                        "\n\n" +
+                        "This verification link will expire in 15 minutes.\n\n" +
+                        "If you did not create a MiniCache account, " +
+                        "you can safely ignore this email.\n\n" +
+                        "Regards,\n" +
+                        "MiniCache Team"
+        );
+
+        mailSender.send(message);
+    }
 }
