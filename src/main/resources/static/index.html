@@ -34,7 +34,74 @@
     >
 
     <button type="button" onclick="login()">Sign In</button>
+
+    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+
     <p id="loginMessage"></p>
+
+</section>
+<!-- Forgot Password Section -->
+
+<section id="forgotPasswordSection" class="login-container" style="display: none;">
+
+    <h1>Forgot Password</h1>
+
+    <p>Enter your username to reset your password.</p>
+
+    <input
+            type="text"
+            id="forgotUsername"
+            placeholder="Enter Username"
+    >
+
+    <button type="button" onclick="requestPasswordReset()">
+        Send Reset Request
+    </button>
+
+    <p id="forgotPasswordMessage"></p>
+
+    <a href="#" id="backToLogin">
+        Back to Login
+    </a>
+
+</section>
+<!-- Reset Password Section -->
+
+<section id="resetPasswordSection"
+         class="login-container"
+         style="display: none;">
+
+    <h1>Reset Password</h1>
+
+    <p>Enter your reset token and new password.</p>
+
+    <input
+            type="text"
+            id="resetToken"
+            placeholder="Enter Reset Token"
+    >
+
+    <input
+            type="password"
+            id="newPassword"
+            placeholder="Enter New Password"
+    >
+
+    <input
+            type="password"
+            id="confirmPassword"
+            placeholder="Confirm New Password"
+    >
+
+    <button type="button" onclick="resetPassword()">
+        Reset Password
+    </button>
+
+    <p id="resetPasswordMessage"></p>
+
+    <a href="#" id="resetBackToLogin">
+        Back to Login
+    </a>
 
 </section>
 <div id="dashboardSection" style="display: none;">

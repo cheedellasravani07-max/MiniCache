@@ -2036,3 +2036,191 @@ document.addEventListener(
         );
     }
 );
+// =========================
+// FORGOT PASSWORD UI
+// =========================
+
+document.getElementById("forgotPasswordLink").addEventListener("click", function (event) {
+    event.preventDefault();
+
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("forgotPasswordSection").style.display = "block";
+});
+
+document.getElementById("backToLogin").addEventListener("click", function (event) {
+    event.preventDefault();
+
+    document.getElementById("forgotPasswordSection").style.display = "none";
+    document.getElementById("loginSection").style.display = "block";
+});
+// =========================
+// FORGOT PASSWORD API
+// =========================
+
+async function requestPasswordReset() {
+
+    const username =
+        document.getElementById("forgotUsername").value.trim();
+
+    const message =
+        document.getElementById("forgotPasswordMessage");
+
+    if (!username) {
+        message.textContent = "Please enter your username.";
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "https://minicache-api.onrender.com/auth/forgot-password",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    username: username
+                })
+            }
+        );
+
+        const data = await response.json();
+        if (response.ok) {
+
+            message.textContent =
+                "Password reset request sent successfully.";
+
+            console.log("Forgot password response:", data);
+
+            document.getElementById("forgotPasswordSection").style.display = "none";
+
+            document.getElementById("resetPasswordSection").style.display = "block";
+        }
+        else {
+
+            message.textContent =
+                data.message || "Password reset request failed.";
+        }
+
+    } catch (error) {
+
+        console.error("Forgot password error:", error);
+
+        message.textContent =
+            "Unable to connect to the server.";
+    }
+}
+// =========================
+// RESET PASSWORD
+// =========================
+
+async function resetPassword() {
+
+    const token =
+        document.getElementById("resetToken").value.trim();
+
+    const newPassword =
+        document.getElementById("newPassword").value;
+
+    const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+    const message =
+        document.getElementById("resetPasswordMessage");
+
+    // Validate token
+    if (!token) {
+        message.textContent = "Please enter the reset token.";
+        return;
+    }
+
+    // Validate password
+    if (!newPassword) {
+        message.textContent = "Please enter a new password.";
+        return;
+    }
+    if (newPassword.length < 8) {
+        message.textContent =
+            "Password must be at least 8 characters.";
+        return;
+    }
+    // Confirm password
+    if (newPassword !== confirmPassword) {
+        message.textContent = "Passwords do not match.";
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/auth/reset-password`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    token: token,
+                    newPassword: newPassword
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        console.log("Reset password response:", data);
+
+        if (response.ok && data.success) {
+
+            message.textContent =
+                "Password reset successfully. You can now login.";
+
+            // Clear fields
+            document.getElementById("resetToken").value = "";
+            document.getElementById("newPassword").value = "";
+            document.getElementById("confirmPassword").value = "";
+
+        } else {
+
+            message.textContent =
+                data.message || "Password reset failed.";
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Reset password error:",
+            error
+        );
+
+        message.textContent =
+            "Unable to connect to the server.";
+    }
+}
+// =========================
+// RESET PASSWORD - BACK TO LOGIN
+// =========================
+
+document.getElementById("resetBackToLogin").addEventListener(
+    "click",
+    function (event) {
+
+        event.preventDefault();
+
+        document.getElementById("resetPasswordSection").style.display = "none";
+
+        document.getElementById("loginSection").style.display = "block";
+
+        document.getElementById("resetPasswordMessage").textContent = "";
+
+        document.getElementById("resetToken").value = "";
+        document.getElementById("newPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
+    }
+);
+
