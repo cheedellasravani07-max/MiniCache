@@ -2066,14 +2066,18 @@ async function requestPasswordReset() {
         document.getElementById("forgotPasswordMessage");
 
     if (!username) {
-        message.textContent = "Please enter your username.";
+        message.textContent =
+            "Please enter your username.";
         return;
     }
+
+    message.textContent =
+        "Sending reset request...";
 
     try {
 
         const response = await fetch(
-            "https://minicache-api.onrender.com/auth/forgot-password",
+            `${API_URL}/auth/forgot-password`,
             {
                 method: "POST",
 
@@ -2088,26 +2092,68 @@ async function requestPasswordReset() {
         );
 
         const data = await response.json();
+
+        console.log(
+            "Forgot password response:",
+            data
+        );
+
         if (response.ok) {
 
+            // Show success message
             message.textContent =
                 "Password reset request sent successfully.";
 
-            console.log("Forgot password response:", data);
+            // ------------------------------------
+            // GET RESET TOKEN FROM BACKEND
+            // ------------------------------------
 
-            document.getElementById("forgotPasswordSection").style.display = "none";
+            if (data.resetToken) {
 
-            document.getElementById("resetPasswordSection").style.display = "block";
-        }
-        else {
+                document.getElementById("resetToken").value =
+                    data.resetToken;
+
+                console.log(
+                    "Reset token received:",
+                    data.resetToken
+                );
+
+            } else {
+
+                console.log(
+                    "No reset token returned by backend."
+                );
+            }
+
+            // ------------------------------------
+            // WAIT 2 SECONDS BEFORE SHOWING RESET
+            // ------------------------------------
+
+            setTimeout(() => {
+
+                document.getElementById(
+                    "forgotPasswordSection"
+                ).style.display = "none";
+
+                document.getElementById(
+                    "resetPasswordSection"
+                ).style.display = "block";
+
+            }, 2000);
+
+        } else {
 
             message.textContent =
-                data.message || "Password reset request failed.";
+                data.message ||
+                "Password reset request failed.";
         }
 
     } catch (error) {
 
-        console.error("Forgot password error:", error);
+        console.error(
+            "Forgot password error:",
+            error
+        );
 
         message.textContent =
             "Unable to connect to the server.";

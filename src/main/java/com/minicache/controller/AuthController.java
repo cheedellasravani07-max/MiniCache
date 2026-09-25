@@ -93,6 +93,8 @@ public class AuthController {
                 encodedPassword
         );
 
+        newUser.setEmail(user.getEmail());
+
         userRepository.save(newUser);
 
         response.put("success", true);
