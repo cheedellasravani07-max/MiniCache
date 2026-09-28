@@ -30,18 +30,18 @@
             type="email"
             id="registerEmail"
             placeholder="Enter Email"
+            autocomplete="email"
     >
 
     <input
             type="password"
             id="registerPassword"
             placeholder="Enter Password"
+            autocomplete="new-password"
     >
-
-    <button type="button" onclick="register()">
+    <button type="button" onclick="registerUser()">
         Create Account
     </button>
-
     <p id="registerMessage"></p>
 
     <a href="#" id="backToLoginFromRegister">
@@ -67,6 +67,7 @@
             type="password"
             id="password"
             placeholder="Password"
+            autocomplete="current-password"
     >
 
     <button type="button" onclick="login()">Sign In</button>

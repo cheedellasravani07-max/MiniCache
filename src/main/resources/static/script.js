@@ -2273,18 +2273,22 @@ document.getElementById("resetBackToLogin").addEventListener(
 // REGISTRATION UI
 // ======================================================
 
-document.getElementById("registerLink").addEventListener(
-    "click",
-    function (event) {
+const registerLink = document.getElementById("registerLink");
 
-        event.preventDefault();
+if (registerLink) {
+    registerLink.addEventListener(
+        "click",
+        function (event) {
 
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("registerSection").style.display = "block";
+            event.preventDefault();
 
-        document.getElementById("loginMessage").textContent = "";
-    }
-);
+            document.getElementById("loginSection").style.display = "none";
+            document.getElementById("registerSection").style.display = "block";
+
+            document.getElementById("loginMessage").textContent = "";
+        }
+    );
+}
 
 
 // ======================================================
