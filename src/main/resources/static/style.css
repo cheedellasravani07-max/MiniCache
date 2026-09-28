@@ -453,3 +453,103 @@ body.login-page {
         font-size: 24px;
     }
 }
+/* ===============================
+   Authentication Pages
+   =============================== */
+
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    margin: 80px auto;
+    padding: 35px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.login-container h1 {
+    margin-bottom: 10px;
+    font-size: 30px;
+    color: #111827;
+}
+
+.login-container h2 {
+    margin-bottom: 15px;
+    font-size: 24px;
+    color: #374151;
+}
+
+.login-container p {
+    margin-bottom: 20px;
+    color: #6b7280;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 13px 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.login-container input:focus {
+    border-color: #2563eb;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.login-container button:hover {
+    background: #1d4ed8;
+}
+
+.login-container a {
+    display: block;
+    margin-top: 15px;
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+#registerMessage,
+#forgotPasswordMessage,
+#resetPasswordMessage,
+#verificationMessage {
+    margin-top: 15px;
+    font-weight: 600;
+}
+
+@media (max-width: 500px) {
+
+    .login-container {
+        width: calc(100% - 30px);
+        margin: 30px auto;
+        padding: 25px;
+    }
+
+    .login-container h1 {
+        font-size: 26px;
+    }
+
+    .login-container h2 {
+        font-size: 21px;
+    }
+}

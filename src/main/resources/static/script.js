@@ -2269,4 +2269,194 @@ document.getElementById("resetBackToLogin").addEventListener(
         document.getElementById("confirmPassword").value = "";
     }
 );
+// ======================================================
+// REGISTRATION UI
+// ======================================================
 
+document.getElementById("registerLink").addEventListener(
+    "click",
+    function (event) {
+
+        event.preventDefault();
+
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("registerSection").style.display = "block";
+
+        document.getElementById("loginMessage").textContent = "";
+    }
+);
+
+
+// ======================================================
+// BACK TO LOGIN FROM REGISTRATION
+// ======================================================
+
+document.getElementById("backToLoginFromRegister").addEventListener(
+    "click",
+    function (event) {
+
+        event.preventDefault();
+
+        document.getElementById("registerSection").style.display = "none";
+        document.getElementById("loginSection").style.display = "block";
+
+        document.getElementById("registerMessage").textContent = "";
+    }
+);
+
+
+// ======================================================
+// REGISTER USER
+// ======================================================
+
+async function registerUser() {
+
+    const username =
+        document.getElementById("registerUsername").value.trim();
+
+    const email =
+        document.getElementById("registerEmail").value.trim();
+
+    const password =
+        document.getElementById("registerPassword").value;
+
+    const message =
+        document.getElementById("registerMessage");
+
+
+    // Validate username
+
+    if (!username) {
+
+        message.textContent =
+            "Please enter a username.";
+
+        return;
+    }
+
+
+    // Validate email
+
+    if (!email) {
+
+        message.textContent =
+            "Please enter your email.";
+
+        return;
+    }
+
+
+    // Basic email validation
+
+    const emailPattern =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(email)) {
+
+        message.textContent =
+            "Please enter a valid email address.";
+
+        return;
+    }
+
+
+    // Validate password
+
+    if (!password) {
+
+        message.textContent =
+            "Please enter a password.";
+
+        return;
+    }
+
+
+    if (password.length < 8) {
+
+        message.textContent =
+            "Password must be at least 8 characters.";
+
+        return;
+    }
+
+
+    message.textContent =
+        "Creating your account...";
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/auth/register`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        username: username,
+
+                        password: password,
+
+                        email: email
+
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Registration response:",
+            data
+        );
+
+
+        if (response.ok && data.success) {
+
+            message.textContent =
+                "Registration successful! Please check your email and verify your account.";
+
+            // Clear registration fields
+
+            document.getElementById(
+                "registerUsername"
+            ).value = "";
+
+            document.getElementById(
+                "registerEmail"
+            ).value = "";
+
+            document.getElementById(
+                "registerPassword"
+            ).value = "";
+
+
+        } else {
+
+            message.textContent =
+                data.message ||
+                "Registration failed.";
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Registration error:",
+            error
+        );
+
+        message.textContent =
+            "Unable to connect to the server.";
+
+    }
+}

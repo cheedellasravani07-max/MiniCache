@@ -12,7 +12,43 @@
 </head>
 
 <body>
+<!-- Registration Section -->
 
+<section id="registerSection" class="login-container">
+
+    <h1>Create Account</h1>
+
+    <p>Register for MiniCache</p>
+
+    <input
+            type="text"
+            id="registerUsername"
+            placeholder="Enter Username"
+    >
+
+    <input
+            type="email"
+            id="registerEmail"
+            placeholder="Enter Email"
+    >
+
+    <input
+            type="password"
+            id="registerPassword"
+            placeholder="Enter Password"
+    >
+
+    <button type="button" onclick="register()">
+        Create Account
+    </button>
+
+    <p id="registerMessage"></p>
+
+    <a href="#" id="backToLoginFromRegister">
+        Already have an account? Login
+    </a>
+
+</section>
 <!-- Login Section -->
 
 <section id="loginSection" class="login-container">

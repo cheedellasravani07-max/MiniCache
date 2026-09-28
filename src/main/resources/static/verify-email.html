@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Verify Email - MiniCache</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<section class="login-container">
+
+    <h1>MiniCache</h1>
+
+    <h2>Email Verification</h2>
+
+    <p id="verificationMessage">
+        Verifying your email...
+    </p>
+
+    <button
+            id="loginButton"
+            style="display: none;"
+            onclick="goToLogin()">
+        Go to Login
+    </button>
+
+</section>
+
+
+<script>
+
+    const API_URL =
+        "https://minicache-api.onrender.com";
+
+
+    // ==================================================
+    // VERIFY EMAIL
+    // ==================================================
+
+    async function verifyEmail() {
+
+        const message =
+            document.getElementById(
+                "verificationMessage"
+            );
+
+        const loginButton =
+            document.getElementById(
+                "loginButton"
+            );
+
+
+        // Get token from URL
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const token =
+            params.get("token");
+
+
+        // Check token
+
+        if (!token) {
+
+            message.textContent =
+                "Invalid verification link.";
+
+            message.style.color =
+                "red";
+
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/auth/verify-email?token=${encodeURIComponent(token)}`
+                );
+
+
+            const data =
+                await response.json();
+
+
+            console.log(
+                "Email verification response:",
+                data
+            );
+
+
+            if (
+                response.ok &&
+                data.success
+            ) {
+
+                message.textContent =
+                    "Email verified successfully! You can now login.";
+
+                message.style.color =
+                    "green";
+
+                loginButton.style.display =
+                    "block";
+
+            } else {
+
+                message.textContent =
+                    data.message ||
+                    "Email verification failed.";
+
+                message.style.color =
+                    "red";
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "Email verification error:",
+                error
+            );
+
+            message.textContent =
+                "Unable to connect to the server.";
+
+            message.style.color =
+                "red";
+        }
+    }
+
+
+    // ==================================================
+    // GO TO LOGIN
+    // ==================================================
+
+    function goToLogin() {
+
+        window.location.href =
+            "index.html";
+    }
+
+
+    // ==================================================
+    // START VERIFICATION
+    // ==================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        verifyEmail
+    );
+
+</script>
+
+</body>
+
+</html>
