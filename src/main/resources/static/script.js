@@ -2431,8 +2431,7 @@ async function registerUser() {
             // ==============================
 
             const verificationLink =
-                `https://minicache-frontend.onrender.com/verify-email.html?token=${data.verificationToken}`;
-
+                `https://minicache-api.onrender.com/verify-email.html?token=${data.verificationToken}`;
 
             await emailjs.send(
                 "service_om680x9",
@@ -2440,7 +2439,8 @@ async function registerUser() {
                 {
                     name: username,
                     email: email,
-                    verification_link: verificationLink
+                    verification_link:
+                        `https://minicache-api.onrender.com/verify-email.html?token=${data.verificationToken}`
                 }
             );
 
