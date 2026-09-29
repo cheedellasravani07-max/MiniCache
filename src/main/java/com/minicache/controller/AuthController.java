@@ -11,7 +11,6 @@ import com.minicache.repository.EmailVerificationTokenRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.minicache.service.EmailService;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,14 +26,13 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
-    private final EmailService emailService;
+
     public AuthController(
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             UserRepository userRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
-            EmailVerificationTokenRepository emailVerificationTokenRepository,
-            EmailService emailService ) {
+            EmailVerificationTokenRepository emailVerificationTokenRepository) {
 
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -44,8 +42,6 @@ public class AuthController {
         this.emailVerificationTokenRepository =
                 emailVerificationTokenRepository;
 
-        this.emailService =
-                emailService;
     }
 
     // =========================
@@ -59,6 +55,10 @@ public class AuthController {
         Map<String, Object> response =
                 new HashMap<>();
 
+        // =========================
+        // Validate username
+        // =========================
+
         if (user.getUsername() == null ||
                 user.getUsername().isBlank()) {
 
@@ -66,9 +66,14 @@ public class AuthController {
             response.put("message",
                     "Username cannot be empty");
 
-            return ResponseEntity.badRequest()
+            return ResponseEntity
+                    .badRequest()
                     .body(response);
         }
+
+        // =========================
+        // Validate password
+        // =========================
 
         if (user.getPassword() == null ||
                 user.getPassword().isBlank()) {
@@ -77,9 +82,30 @@ public class AuthController {
             response.put("message",
                     "Password cannot be empty");
 
-            return ResponseEntity.badRequest()
+            return ResponseEntity
+                    .badRequest()
                     .body(response);
         }
+
+        // =========================
+        // Validate email
+        // =========================
+
+        if (user.getEmail() == null ||
+                user.getEmail().isBlank()) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Email cannot be empty");
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(response);
+        }
+
+        // =========================
+        // Check username
+        // =========================
 
         if (userRepository.existsByUsername(
                 user.getUsername())) {
@@ -88,30 +114,40 @@ public class AuthController {
             response.put("message",
                     "Username already exists");
 
-            return ResponseEntity.badRequest()
+            return ResponseEntity
+                    .badRequest()
                     .body(response);
         }
+
+        // =========================
+        // Create user
+        // =========================
 
         String encodedPassword =
                 passwordEncoder.encode(
                         user.getPassword()
                 );
 
-        User newUser = new User(
-                user.getUsername(),
-                encodedPassword
-        );
+        User newUser =
+                new User(
+                        user.getUsername(),
+                        encodedPassword
+                );
 
         newUser.setEmail(user.getEmail());
 
         userRepository.save(newUser);
 
-// Generate email verification token
+        // =========================
+        // Generate verification token
+        // =========================
+
         String verificationToken =
                 UUID.randomUUID().toString();
 
         LocalDateTime expiryTime =
-                LocalDateTime.now().plusMinutes(15);
+                LocalDateTime.now()
+                        .plusMinutes(15);
 
         EmailVerificationToken emailVerificationToken =
                 new EmailVerificationToken(
@@ -123,23 +159,26 @@ public class AuthController {
         emailVerificationTokenRepository
                 .save(emailVerificationToken);
 
-// Create verification link
-        String verificationLink =
-                "https://minicache-frontend.onrender.com/verify-email?token="
-                        + verificationToken;
-
-// Send verification email
-        emailService.sendVerificationEmail(
-                user.getEmail(),
-                verificationLink
-        );
+        // =========================
+        // Send token to frontend
+        // EmailJS will send the email
+        // =========================
 
         response.put("success", true);
-        response.put("message",
-                "Registration successful. Please check your email to verify your account.");
 
+        response.put(
+                "message",
+                "Registration successful. Please check your email to verify your account."
+        );
+
+        response.put(
+                "verificationToken",
+                verificationToken
+        );
         return ResponseEntity.ok(response);
     }
+
+
 
     // =========================
     // LOGIN

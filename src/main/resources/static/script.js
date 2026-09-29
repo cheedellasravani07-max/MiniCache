@@ -1,3 +1,8 @@
+(function () {
+    emailjs.init({
+        publicKey: "h2Lav4SdA_A_tQL7f"
+    });
+})();
 const API_URL = "https://minicache-api.onrender.com";
 
 
@@ -2312,7 +2317,6 @@ document.getElementById("backToLoginFromRegister").addEventListener(
 // ======================================================
 // REGISTER USER
 // ======================================================
-
 async function registerUser() {
 
     const username =
@@ -2329,7 +2333,6 @@ async function registerUser() {
 
 
     // Validate username
-
     if (!username) {
 
         message.textContent =
@@ -2340,7 +2343,6 @@ async function registerUser() {
 
 
     // Validate email
-
     if (!email) {
 
         message.textContent =
@@ -2351,7 +2353,6 @@ async function registerUser() {
 
 
     // Basic email validation
-
     const emailPattern =
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -2365,7 +2366,6 @@ async function registerUser() {
 
 
     // Validate password
-
     if (!password) {
 
         message.textContent =
@@ -2425,8 +2425,29 @@ async function registerUser() {
 
         if (response.ok && data.success) {
 
+            // ==============================
+            // SEND VERIFICATION EMAIL
+            // USING EMAILJS
+            // ==============================
+
+            const verificationLink =
+                `https://minicache-frontend.onrender.com/verify-email?token=${data.verificationToken}`;
+
+
+            await emailjs.send(
+                "service_om680x9",
+                "template_p8kbb3d",
+                {
+                    name: username,
+                    email: email,
+                    verification_link: verificationLink
+                }
+            );
+
+
             message.textContent =
                 "Registration successful! Please check your email and verify your account.";
+
 
             // Clear registration fields
 
@@ -2455,12 +2476,11 @@ async function registerUser() {
     } catch (error) {
 
         console.error(
-            "Registration error:",
+            "Registration / EmailJS error:",
             error
         );
 
         message.textContent =
-            "Unable to connect to the server.";
-
+            "Account creation succeeded, but the verification email could not be sent.";
     }
 }
