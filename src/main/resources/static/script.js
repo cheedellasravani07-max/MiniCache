@@ -2431,7 +2431,7 @@ async function registerUser() {
             // ==============================
 
             const verificationLink =
-                `https://minicache-frontend.onrender.com/verify-email?token=${data.verificationToken}`;
+                `https://minicache-frontend.onrender.com/verify-email.html?token=${data.verificationToken}`;
 
 
             await emailjs.send(
