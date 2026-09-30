@@ -238,7 +238,8 @@ public class AuthController {
 
         response.put("username",
                 existingUser.getUsername());
-
+        response.put("role",
+                existingUser.getRole().name());
         response.put("token", token);
 
         response.put("refreshToken",

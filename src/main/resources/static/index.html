@@ -146,8 +146,13 @@
 <header>
     <h1>MiniCache</h1>
     <p>In-Memory Cache Management Dashboard</p>
+    <div class="user-role">
+        Role:
+        <span id="userRole">---</span>
+    </div>
 
     <div class="backend-status">
+
         Backend Status:
         <span id="backendStatus">Checking...</span>
     </div>
@@ -520,7 +525,22 @@
         <span id="cacheHealth">Checking...</span>
     </div>
 
+    <!-- Admin Panel -->
+    <section id="adminPanel" class="panel" style="display: none;">
 
+        <h2>Admin Panel</h2>
+
+        <p>
+            This section is available only to administrators.
+        </p>
+
+        <button onclick="testAdminAccess()">
+            Test Admin Authorization
+        </button>
+
+        <p id="adminTestResult"></p>
+
+    </section>
 </main>
 </div>
 <script src="script.js"></script>

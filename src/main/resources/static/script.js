@@ -1757,8 +1757,24 @@ async function login() {
                 data.username ||
                 username
             );
+            // ------------------------------------------
+// SAVE USER ROLE
+// ------------------------------------------
 
+            localStorage.setItem(
+                "minicacheRole",
+                data.role || "USER"
+            );
+// ------------------------------------------
+// DISPLAY USER ROLE
+// ------------------------------------------
 
+            displayUserRole();
+// ------------------------------------------
+// SHOW ADMIN PANEL
+// ------------------------------------------
+
+            showAdminPanel();
             // ------------------------------------------
             // HIDE LOGIN
             // ------------------------------------------
@@ -1845,7 +1861,169 @@ async function login() {
     }
 }
 
+// ======================================================
+// GET USER ROLE FROM JWT
+// ======================================================
 
+function getUserRoleFromToken() {
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    if (!token) {
+        return null;
+    }
+
+    try {
+
+        const payload =
+            JSON.parse(
+                atob(
+                    token
+                        .split(".")[1]
+                        .replace(/-/g, "+")
+                        .replace(/_/g, "/")
+                )
+            );
+
+        return payload.role || null;
+
+    } catch (error) {
+
+        console.error(
+            "Unable to read role from JWT:",
+            error
+        );
+
+        return null;
+    }
+}
+
+
+// ======================================================
+// DISPLAY USER ROLE
+// ======================================================
+
+function displayUserRole() {
+
+    const role =
+        getUserRoleFromToken();
+
+    const roleElement =
+        document.getElementById("userRole");
+
+    if (roleElement) {
+
+        roleElement.textContent =
+            role || "UNKNOWN";
+    }
+
+    console.log(
+        "Logged-in user role:",
+        role
+    );
+}
+// ======================================================
+// SHOW ADMIN PANEL BASED ON ROLE
+// ======================================================
+
+function showAdminPanel() {
+
+    const role =
+        localStorage.getItem("minicacheRole");
+
+    const adminPanel =
+        document.getElementById("adminPanel");
+
+    if (!adminPanel) {
+        return;
+    }
+
+    if (role === "ADMIN") {
+
+        adminPanel.style.display = "block";
+
+    } else {
+
+        adminPanel.style.display = "none";
+    }
+
+    console.log(
+        "Admin panel visibility. Role:",
+        role
+    );
+}
+// ======================================================
+// TEST ADMIN AUTHORIZATION
+// ======================================================
+
+async function testAdminAccess() {
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    const result =
+        document.getElementById("adminTestResult");
+
+    if (!token) {
+
+        result.textContent =
+            "Please login first.";
+
+        return;
+    }
+
+    result.textContent =
+        "Checking admin authorization...";
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/test`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+        const data =
+            await response.text();
+
+        console.log(
+            "Admin test:",
+            response.status,
+            data
+        );
+
+        if (response.ok) {
+
+            result.textContent =
+                "Admin authorization successful: " +
+                data;
+
+        } else {
+
+            result.textContent =
+                "Admin authorization failed. Status: " +
+                response.status;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Admin test error:",
+            error
+        );
+
+        result.textContent =
+            "Unable to connect to backend.";
+    }
+}
 // ======================================================
 // LOGOUT
 // ======================================================
@@ -1962,7 +2140,7 @@ document.addEventListener(
             );
 
         if (token) {
-
+            displayUserRole();
             const loginSection =
                 document.getElementById(
                     "loginSection"
@@ -1987,7 +2165,7 @@ document.addEventListener(
                     "block";
             }
 
-
+            showAdminPanel();
             initializeMetricsChart();
 
             loadStatistics();
@@ -2482,5 +2660,101 @@ async function registerUser() {
 
         message.textContent =
             "Account creation succeeded, but the verification email could not be sent.";
+    }
+}
+// ======================================================
+// ADMIN ROLE AUTHORIZATION
+// ======================================================
+
+function showAdminPanel() {
+
+    const role =
+        localStorage.getItem("minicacheRole");
+
+    const adminPanel =
+        document.getElementById("adminPanel");
+
+    if (!adminPanel) {
+        return;
+    }
+
+    if (role === "ADMIN") {
+
+        adminPanel.style.display = "block";
+
+    } else {
+
+        adminPanel.style.display = "none";
+    }
+}
+// ======================================================
+// TEST ADMIN API
+// ======================================================
+
+async function testAdminAccess() {
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    const result =
+        document.getElementById("adminTestResult");
+
+    if (!token) {
+
+        result.textContent =
+            "Please login first.";
+
+        return;
+    }
+
+    result.textContent =
+        "Checking admin authorization...";
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/test`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+        const data =
+            await response.text();
+
+        console.log(
+            "Admin test response:",
+            response.status,
+            data
+        );
+
+        if (response.ok) {
+
+            result.textContent =
+                "✅ Admin authorization successful: " +
+                data;
+
+        } else {
+
+            result.textContent =
+                "❌ Admin authorization failed. Status: " +
+                response.status;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Admin test error:",
+            error
+        );
+
+        result.textContent =
+            "Unable to connect to backend.";
     }
 }
