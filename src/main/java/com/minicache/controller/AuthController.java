@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
+import com.minicache.model.Role;
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
@@ -135,7 +135,7 @@ public class AuthController {
                 );
 
         newUser.setEmail(user.getEmail());
-
+        newUser.setRole(Role.USER);
         userRepository.save(newUser);
 
         // =========================
@@ -222,7 +222,8 @@ public class AuthController {
         // Generate access token
         String token =
                 jwtService.generateToken(
-                        existingUser.getUsername()
+                        existingUser.getUsername(),
+                        existingUser.getRole().name()
                 );
 
         // Generate refresh token
@@ -290,9 +291,26 @@ public class AuthController {
                             refreshToken
                     );
 
+            User refreshUser =
+                    userRepository
+                            .findByUsername(username)
+                            .orElse(null);
+
+            if (refreshUser == null) {
+
+                response.put("success", false);
+                response.put("message",
+                        "User not found");
+
+                return ResponseEntity
+                        .status(404)
+                        .body(response);
+            }
+
             String newAccessToken =
                     jwtService.generateToken(
-                            username
+                            username,
+                            refreshUser.getRole().name()
                     );
 
             response.put("success", true);

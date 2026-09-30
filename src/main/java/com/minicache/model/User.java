@@ -19,6 +19,9 @@ public class User {
     private String email;
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
     public User() {
     }
 
@@ -61,5 +64,12 @@ public class User {
 
     public void setEmailVerified(boolean emailVerified) {
         this.emailVerified = emailVerified;
+    }
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

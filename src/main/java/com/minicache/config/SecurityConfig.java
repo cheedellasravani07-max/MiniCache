@@ -47,12 +47,16 @@ public class SecurityConfig {
                                 "/cache/health"
                         ).permitAll()
 
-                        // All other cache APIs require JWT
-                        .requestMatchers("/cache/**")
-                        .authenticated()
+                                // ADMIN-only endpoints
+                                .requestMatchers("/admin/**")
+                                .hasRole("ADMIN")
 
-                        .anyRequest()
-                        .permitAll()
+// All other cache APIs require JWT
+                                .requestMatchers("/cache/**")
+                                .authenticated()
+
+                                .anyRequest()
+                                .permitAll()
                 )
 
                 .formLogin(form -> form.disable())

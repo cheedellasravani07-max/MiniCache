@@ -33,10 +33,11 @@ public class JwtService {
     // ACCESS TOKEN
     // =========================
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
 
         return generateToken(
                 username,
+                role,
                 ACCESS_TOKEN_EXPIRATION
         );
     }
@@ -49,6 +50,7 @@ public class JwtService {
 
         return generateToken(
                 username,
+                null,
                 REFRESH_TOKEN_EXPIRATION
         );
     }
@@ -59,6 +61,7 @@ public class JwtService {
 
     private String generateToken(
             String username,
+            String role,
             long expirationTime) {
 
         Date now = new Date();
@@ -70,6 +73,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(username)
+                .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(getSecretKey())
@@ -85,7 +89,11 @@ public class JwtService {
         return getClaims(token)
                 .getSubject();
     }
+    public String extractRole(String token) {
 
+        return getClaims(token)
+                .get("role", String.class);
+    }
     // =========================
     // VALIDATE TOKEN
     // =========================
