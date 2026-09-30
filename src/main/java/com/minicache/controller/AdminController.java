@@ -5,9 +5,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 @RestController
 @RequestMapping("/admin")
-@CrossOrigin(origins = "*")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminController {
 
     @GetMapping("/test")
