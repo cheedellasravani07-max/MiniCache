@@ -81,5 +81,42 @@ public class AdminController {
                 )
         );
     }
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<?> deleteUser(
+            @PathVariable Long id) {
 
+        User user = userRepository.findById(id)
+                .orElse(null);
+
+        if (user == null) {
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        if (user.getRole() == Role.ADMIN) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            Map.of(
+                                    "success", false,
+                                    "message",
+                                    "Admin accounts cannot be deleted"
+                            )
+                    );
+        }
+
+        userRepository.delete(user);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "success", true,
+                        "message",
+                        "User deleted successfully",
+                        "username",
+                        user.getUsername()
+                )
+        );
+    }
 }
