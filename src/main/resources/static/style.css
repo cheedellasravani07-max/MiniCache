@@ -621,3 +621,38 @@ body.login-page {
     font-weight: 700;
     margin: 0;
 }
+/* ======================================================
+   ADMIN USER MANAGEMENT
+   ====================================================== */
+
+.admin-section-title {
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+.admin-users-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+#adminUsersTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+#adminUsersTable th,
+#adminUsersTable td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+#adminUsersTable th {
+    font-weight: 700;
+}
+
+#adminUsersTable tbody tr:hover {
+    background: #f5f5f5;
+}

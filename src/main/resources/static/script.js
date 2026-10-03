@@ -1776,6 +1776,7 @@ async function login() {
 
             showAdminPanel();
             loadAdminStats();
+            loadAdminUsers();
             // ------------------------------------------
             // HIDE LOGIN
             // ------------------------------------------
@@ -2754,6 +2755,87 @@ async function loadAdminStats() {
 
         console.error(
             "Admin statistics error:",
+            error
+        );
+    }
+}
+// ======================================================
+// LOAD ADMIN USER LIST
+// ======================================================
+
+async function loadAdminUsers() {
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    const role =
+        localStorage.getItem("minicacheRole");
+
+    if (!token || role !== "ADMIN") {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/users`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+        if (!response.ok) {
+
+            console.error(
+                "Failed to load admin users:",
+                response.status
+            );
+
+            return;
+        }
+
+        const users =
+            await response.json();
+
+        const tableBody =
+            document.getElementById(
+                "adminUsersTableBody"
+            );
+
+        if (!tableBody) {
+            return;
+        }
+
+        tableBody.innerHTML = "";
+
+        users.forEach(user => {
+
+            const row =
+                document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${user.id}</td>
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${user.role}</td>
+                <td>
+                    ${user.emailVerified ? "✅ Yes" : "❌ No"}
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Admin users error:",
             error
         );
     }
