@@ -32,10 +32,11 @@ public class CacheController {
     private final DateTimeFormatter timeFormatter =
             DateTimeFormatter.ofPattern("h:mm:ss a");
 
-    public CacheController() {
-        cache = new MiniCache<>(100);
-    }
+    public CacheController(
+            MiniCache<String, String> cache) {
 
+        this.cache = cache;
+    }
     // Set or update cache value
     @PostMapping("/key/{key}")
     public ResponseEntity<String> set(

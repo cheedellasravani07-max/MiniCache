@@ -1,5 +1,5 @@
 package com.minicache.controller;
-
+import com.minicache.cache.MiniCache;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.minicache.model.Role;
@@ -13,11 +13,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @SecurityRequirement(name = "bearerAuth")
 public class AdminController {
     private final UserRepository userRepository;
+    private final MiniCache<String, String> cache;
+    public AdminController(
+            UserRepository userRepository,
+            MiniCache<String, String> cache) {
 
-    public AdminController(UserRepository userRepository) {
         this.userRepository = userRepository;
+        this.cache = cache;
     }
-
     @GetMapping("/test")
     public ResponseEntity<?> adminTest() {
 
@@ -141,14 +144,25 @@ public class AdminController {
 
         long unverifiedUsers =
                 totalUsers - verifiedUsers;
-
+        int cacheSize = cache.size();
+        int cacheCapacity = cache.getCapacity();
+        int cacheHits = cache.getCacheHits();
+        int cacheMisses = cache.getCacheMisses();
+        double cacheHitRate = cache.getHitRate();
+        int cacheEvictions = cache.getEvictionCount();
         return ResponseEntity.ok(
-                Map.of(
-                        "totalUsers", totalUsers,
-                        "totalAdmins", totalAdmins,
-                        "totalNormalUsers", totalNormalUsers,
-                        "verifiedUsers", verifiedUsers,
-                        "unverifiedUsers", unverifiedUsers
+                Map.ofEntries(
+                        Map.entry("totalUsers", totalUsers),
+                        Map.entry("totalAdmins", totalAdmins),
+                        Map.entry("totalNormalUsers", totalNormalUsers),
+                        Map.entry("verifiedUsers", verifiedUsers),
+                        Map.entry("unverifiedUsers", unverifiedUsers),
+                        Map.entry("cacheSize", cacheSize),
+                        Map.entry("cacheCapacity", cacheCapacity),
+                        Map.entry("cacheHits", cacheHits),
+                        Map.entry("cacheMisses", cacheMisses),
+                        Map.entry("cacheHitRate", cacheHitRate),
+                        Map.entry("cacheEvictions", cacheEvictions)
                 )
         );
     }

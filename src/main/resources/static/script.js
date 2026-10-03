@@ -2823,10 +2823,23 @@ async function loadAdminUsers() {
     <td>${user.id}</td>
     <td>${user.username}</td>
     <td>${user.email}</td>
-    <td>${user.role}</td>
     <td>
-        ${user.emailVerified ? "✅ Yes" : "❌ No"}
-    </td>
+    <span class="role-badge ${user.role.toLowerCase()}">
+        ${user.role}
+    </span>
+</td>
+
+<td>
+    ${
+                user.emailVerified
+                    ? `<span class="status-badge verified">
+                   ✓ VERIFIED
+               </span>`
+                    : `<span class="status-badge unverified">
+                   ✕ UNVERIFIED
+               </span>`
+            }
+</td>
     <td>
         ${
                 user.role === "USER"
