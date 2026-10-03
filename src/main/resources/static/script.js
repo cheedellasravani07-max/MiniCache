@@ -2750,7 +2750,30 @@ async function loadAdminStats() {
         document.getElementById(
             "adminUnverifiedUsers"
         ).textContent = data.unverifiedUsers;
+        document.getElementById(
+            "adminCacheSize"
+        ).textContent = data.cacheSize;
 
+        document.getElementById(
+            "adminCacheCapacity"
+        ).textContent = data.cacheCapacity;
+
+        document.getElementById(
+            "adminCacheHits"
+        ).textContent = data.cacheHits;
+
+        document.getElementById(
+            "adminCacheMisses"
+        ).textContent = data.cacheMisses;
+
+        document.getElementById(
+            "adminCacheHitRate"
+        ).textContent =
+            data.cacheHitRate.toFixed(2) + "%";
+
+        document.getElementById(
+            "adminCacheEvictions"
+        ).textContent = data.cacheEvictions;
     } catch (error) {
 
         console.error(
