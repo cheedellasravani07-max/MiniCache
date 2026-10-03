@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 import com.minicache.model.CacheActivity;
-
+import com.minicache.service.PersistenceService;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -32,10 +32,14 @@ public class CacheController {
     private final DateTimeFormatter timeFormatter =
             DateTimeFormatter.ofPattern("h:mm:ss a");
 
+    private final PersistenceService persistenceService;
+
     public CacheController(
-            MiniCache<String, String> cache) {
+            MiniCache<String, String> cache,
+            PersistenceService persistenceService) {
 
         this.cache = cache;
+        this.persistenceService = persistenceService;
     }
     // Set or update cache value
     @PostMapping("/key/{key}")
@@ -65,6 +69,7 @@ public class CacheController {
             );
         } else {
             cache.set(key, value);
+            persistenceService.saveSet(key, value);
         }
         addActivity(
                 "SET",
@@ -132,6 +137,7 @@ public class CacheController {
             );
             return ResponseEntity.notFound().build();
         }
+        persistenceService.saveDelete(key);
         addActivity(
                 "DELETE",
                 key,
@@ -147,7 +153,7 @@ public class CacheController {
     public ResponseEntity<String> clear() {
 
         cache.clear();
-
+        persistenceService.saveClear();
         return ResponseEntity.ok(
                 "Cache cleared successfully"
         );
