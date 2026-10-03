@@ -1775,6 +1775,7 @@ async function login() {
 // ------------------------------------------
 
             showAdminPanel();
+            loadAdminStats();
             // ------------------------------------------
             // HIDE LOGIN
             // ------------------------------------------
@@ -2166,6 +2167,7 @@ document.addEventListener(
             }
 
             showAdminPanel();
+            loadAdminStats();
             initializeMetricsChart();
 
             loadStatistics();
@@ -2685,6 +2687,76 @@ function showAdminPanel() {
     } else {
 
         adminPanel.style.display = "none";
+    }
+}
+// ======================================================
+// LOAD ADMIN STATISTICS
+// ======================================================
+
+async function loadAdminStats() {
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    const role =
+        localStorage.getItem("minicacheRole");
+
+    if (!token || role !== "ADMIN") {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/stats`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+        if (!response.ok) {
+            console.error(
+                "Failed to load admin statistics:",
+                response.status
+            );
+            return;
+        }
+
+        const data =
+            await response.json();
+
+        document.getElementById(
+            "adminTotalUsers"
+        ).textContent = data.totalUsers;
+
+        document.getElementById(
+            "adminTotalAdmins"
+        ).textContent = data.totalAdmins;
+
+        document.getElementById(
+            "adminTotalNormalUsers"
+        ).textContent = data.totalNormalUsers;
+
+        document.getElementById(
+            "adminVerifiedUsers"
+        ).textContent = data.verifiedUsers;
+
+        document.getElementById(
+            "adminUnverifiedUsers"
+        ).textContent = data.unverifiedUsers;
+
+    } catch (error) {
+
+        console.error(
+            "Admin statistics error:",
+            error
+        );
     }
 }
 // ======================================================
