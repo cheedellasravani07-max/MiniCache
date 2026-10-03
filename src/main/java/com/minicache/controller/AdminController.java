@@ -7,6 +7,7 @@ import java.util.Map;
 import com.minicache.model.User;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.minicache.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 @RestController
 @RequestMapping("/admin")
 @SecurityRequirement(name = "bearerAuth")
@@ -48,16 +49,37 @@ public class AdminController {
                     .build();
         }
 
+        if (user.getUsername().equals(
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getName())) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            Map.of(
+                                    "success", false,
+                                    "message",
+                                    "Admin cannot change their own role"
+                            )
+                    );
+        }
+
         user.setRole(role);
         userRepository.save(user);
 
         return ResponseEntity.ok(
                 Map.of(
                         "success", true,
-                        "message", "User role updated successfully",
-                        "username", user.getUsername(),
-                        "role", user.getRole().name()
+                        "message",
+                        "User role updated successfully",
+                        "username",
+                        user.getUsername(),
+                        "role",
+                        user.getRole().name()
                 )
         );
     }
+
 }
