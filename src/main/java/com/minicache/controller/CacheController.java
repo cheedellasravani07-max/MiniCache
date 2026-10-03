@@ -128,7 +128,6 @@ public class CacheController {
             @PathVariable String key) {
 
         boolean deleted = cache.delete(key);
-
         if (!deleted) {
             addActivity(
                     "DELETE",

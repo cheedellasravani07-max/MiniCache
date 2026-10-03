@@ -154,7 +154,7 @@ public class PersistenceService {
 
                     String key = decode(encodedKey);
 
-                    cache.delete(key);
+
                     continue;
                 }
 

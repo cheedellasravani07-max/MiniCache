@@ -2113,7 +2113,7 @@ document.addEventListener(
         console.log(
             "MiniCache JavaScript loaded successfully."
         );
-
+        showPersistenceStatus();
 
         // Initialize chart if dashboard
         // is already visible
@@ -2662,6 +2662,15 @@ async function registerUser() {
 
         message.textContent =
             "Account creation succeeded, but the verification email could not be sent.";
+    }
+}
+function showPersistenceStatus() {
+
+    const status =
+        document.getElementById("persistenceStatus");
+
+    if (status) {
+        status.textContent = "Enabled";
     }
 }
 // ======================================================
