@@ -2820,14 +2820,33 @@ async function loadAdminUsers() {
                 document.createElement("tr");
 
             row.innerHTML = `
-                <td>${user.id}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>${user.role}</td>
-                <td>
-                    ${user.emailVerified ? "✅ Yes" : "❌ No"}
-                </td>
-            `;
+    <td>${user.id}</td>
+    <td>${user.username}</td>
+    <td>${user.email}</td>
+    <td>${user.role}</td>
+    <td>
+        ${user.emailVerified ? "✅ Yes" : "❌ No"}
+    </td>
+    <td>
+        ${
+                user.role === "USER"
+                    ? `<button onclick="changeUserRole(${user.id}, 'ADMIN')">
+                       Make Admin
+                   </button>`
+                    : `<button onclick="changeUserRole(${user.id}, 'USER')">
+                       Make User
+                   </button>`
+            }
+
+        ${
+                user.role === "USER"
+                    ? `<button onclick="deleteUser(${user.id})">
+                       Delete
+                   </button>`
+                    : ""
+            }
+    </td>
+`;
 
             tableBody.appendChild(row);
         });
@@ -2837,6 +2856,146 @@ async function loadAdminUsers() {
         console.error(
             "Admin users error:",
             error
+        );
+    }
+}
+// ======================================================
+// CHANGE USER ROLE
+// ======================================================
+
+async function changeUserRole(userId, newRole) {
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    if (!token) {
+        alert("Please login first.");
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            `Change this user's role to ${newRole}?`
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/users/${userId}/role?role=${newRole}`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if (response.ok) {
+
+            alert(
+                data.message
+            );
+
+            loadAdminUsers();
+            loadAdminStats();
+
+        } else {
+
+            alert(
+                data.message ||
+                "Unable to change user role."
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Change role error:",
+            error
+        );
+
+        alert(
+            "Unable to connect to backend."
+        );
+    }
+}
+// ======================================================
+// DELETE USER
+// ======================================================
+
+async function deleteUser(userId) {
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    if (!token) {
+        alert("Please login first.");
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete this user?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/users/${userId}`,
+                {
+                    method: "DELETE",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if (response.ok) {
+
+            alert(
+                data.message
+            );
+
+            loadAdminUsers();
+            loadAdminStats();
+
+        } else {
+
+            alert(
+                data.message ||
+                "Unable to delete user."
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Delete user error:",
+            error
+        );
+
+        alert(
+            "Unable to connect to backend."
         );
     }
 }

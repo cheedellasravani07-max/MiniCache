@@ -656,3 +656,53 @@ body.login-page {
 #adminUsersTable tbody tr:hover {
     background: #f5f5f5;
 }
+/* ======================================================
+   ADMIN ACTION BUTTONS
+   ====================================================== */
+
+#adminUsersTable button {
+    padding: 7px 12px;
+    margin: 2px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#adminUsersTable button:hover {
+    opacity: 0.85;
+}
+/* ======================================================
+   ADMIN STATUS BADGES
+   ====================================================== */
+
+.role-badge,
+.status-badge {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.role-badge.admin {
+    background: #e8e0ff;
+    color: #5b3cc4;
+}
+
+.role-badge.user {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-badge.verified {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-badge.unverified {
+    background: #ffebee;
+    color: #c62828;
+}
