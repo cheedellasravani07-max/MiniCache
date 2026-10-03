@@ -2,7 +2,7 @@ package com.minicache.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.minicache.model.Role;
 import java.util.Map;
 import com.minicache.model.User;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -32,6 +32,32 @@ public class AdminController {
 
         return ResponseEntity.ok(
                 userRepository.findAll()
+        );
+    }
+    @PutMapping("/users/{id}/role")
+    public ResponseEntity<?> changeUserRole(
+            @PathVariable Long id,
+            @RequestParam Role role) {
+
+        User user = userRepository.findById(id)
+                .orElse(null);
+
+        if (user == null) {
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        user.setRole(role);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "success", true,
+                        "message", "User role updated successfully",
+                        "username", user.getUsername(),
+                        "role", user.getRole().name()
+                )
         );
     }
 }
