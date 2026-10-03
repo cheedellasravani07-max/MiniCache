@@ -119,4 +119,37 @@ public class AdminController {
                 )
         );
     }
+    @GetMapping("/stats")
+    public ResponseEntity<?> getAdminStats() {
+
+        long totalUsers = userRepository.count();
+
+        long totalAdmins = userRepository.findAll()
+                .stream()
+                .filter(user -> user.getRole() == Role.ADMIN)
+                .count();
+
+        long totalNormalUsers = userRepository.findAll()
+                .stream()
+                .filter(user -> user.getRole() == Role.USER)
+                .count();
+
+        long verifiedUsers = userRepository.findAll()
+                .stream()
+                .filter(User::isEmailVerified)
+                .count();
+
+        long unverifiedUsers =
+                totalUsers - verifiedUsers;
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "totalUsers", totalUsers,
+                        "totalAdmins", totalAdmins,
+                        "totalNormalUsers", totalNormalUsers,
+                        "verifiedUsers", verifiedUsers,
+                        "unverifiedUsers", unverifiedUsers
+                )
+        );
+    }
 }
