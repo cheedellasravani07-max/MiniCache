@@ -2167,7 +2167,6 @@ document.addEventListener(
             }
 
             showAdminPanel();
-            loadAdminStats();
             initializeMetricsChart();
 
             loadStatistics();
