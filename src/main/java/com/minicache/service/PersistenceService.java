@@ -49,7 +49,36 @@ public class PersistenceService {
             );
         }
     }
+    public synchronized void saveSet(
+            String key,
+            String value,
+            long ttlMillis) {
 
+        createDataDirectory();
+
+        try (BufferedWriter writer =
+                     new BufferedWriter(
+                             new FileWriter(AOF_FILE, true))) {
+
+            writer.write(
+                    "SET_TTL|" +
+                            encode(key) +
+                            "|" +
+                            encode(value) +
+                            "|" +
+                            ttlMillis
+            );
+
+            writer.newLine();
+
+        } catch (IOException e) {
+
+            throw new RuntimeException(
+                    "Failed to save cache data",
+                    e
+            );
+        }
+    }
     public synchronized void saveDelete(
             String key) {
 
@@ -158,7 +187,28 @@ public class PersistenceService {
                     continue;
                 }
 
-                if (line.startsWith("SET|")) {
+                if (line.startsWith("SET_TTL|")) {
+
+                    String[] parts =
+                            line.split("\\|", 4);
+
+                    if (parts.length == 4) {
+
+                        String key =
+                                decode(parts[1]);
+
+                        String value =
+                                decode(parts[2]);
+
+                        long ttl =
+                                Long.parseLong(parts[3]);
+
+                        if (ttl > 0) {
+                            cache.set(key, value, ttl);
+                        }
+                    }
+
+                } else if (line.startsWith("SET|")) {
 
                     String[] parts =
                             line.split("\\|", 3);

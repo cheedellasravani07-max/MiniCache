@@ -62,12 +62,19 @@ public class CacheController {
             long ttl = Long.parseLong(ttlObject.toString());
 
             cache.set(key, value, ttl);
+
+            persistenceService.saveSet(
+                    key,
+                    value,
+                    ttl
+            );
+
             addActivity(
                     "SET",
                     key,
                     "TTL: " + ttl + " ms"
             );
-        } else {
+        }else {
             cache.set(key, value);
             persistenceService.saveSet(key, value);
         }
@@ -234,7 +241,10 @@ public class CacheController {
                     entry.getKey(),
                     entry.getValue()
             );
-
+            persistenceService.saveSet(
+                    entry.getKey(),
+                    entry.getValue()
+            );
             addActivity(
                     "BULK SET",
                     entry.getKey(),
@@ -344,5 +354,17 @@ public class CacheController {
                 Math.round(requestsPerSecond * 100.0) / 100.0);
 
         return ResponseEntity.ok(result);
+    }
+    @GetMapping("/persistence/status")
+    public ResponseEntity<Map<String, Object>> persistenceStatus() {
+
+        Map<String, Object> status = new HashMap<>();
+
+        status.put("enabled", true);
+        status.put("type", "Append-Only File (AOF)");
+        status.put("file", "data/cache.aof");
+        status.put("automaticRestore", true);
+
+        return ResponseEntity.ok(status);
     }
 }

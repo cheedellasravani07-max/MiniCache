@@ -277,4 +277,29 @@ public class MiniCache<K, V> {
     public synchronized java.util.List<K> getLRUOrder() {
         return list.getKeysInOrder();
     }
+    public synchronized long getRemainingTTL(K key) {
+
+        validateKey(key);
+
+        CacheNode<K, V> node = cache.get(key);
+
+        if (node == null) {
+            return -1;
+        }
+
+        if (node.expiryTime == 0) {
+            return 0;
+        }
+
+        long remaining =
+                node.expiryTime - System.currentTimeMillis();
+
+        if (remaining <= 0) {
+            cache.remove(key);
+            list.removeNode(node);
+            return -1;
+        }
+
+        return remaining;
+    }
 }
