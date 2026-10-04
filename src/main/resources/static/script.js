@@ -2664,13 +2664,58 @@ async function registerUser() {
             "Account creation succeeded, but the verification email could not be sent.";
     }
 }
-function showPersistenceStatus() {
+async function showPersistenceStatus() {
 
     const status =
         document.getElementById("persistenceStatus");
 
-    if (status) {
-        status.textContent = "Enabled";
+    if (!status) return;
+
+    const token =
+        localStorage.getItem("minicacheToken");
+
+    if (!token) {
+        status.textContent = "Login required";
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/cache/persistence/status`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+        if (!response.ok) {
+            status.textContent =
+                "Unavailable";
+            return;
+        }
+
+        const data =
+            await response.json();
+
+        status.textContent =
+            data.enabled
+                ? "Enabled"
+                : "Disabled";
+
+    } catch (error) {
+
+        console.error(
+            "Persistence status error:",
+            error
+        );
+
+        status.textContent =
+            "Unavailable";
     }
 }
 // ======================================================
