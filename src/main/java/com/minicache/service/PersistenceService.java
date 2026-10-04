@@ -56,6 +56,9 @@ public class PersistenceService {
 
         createDataDirectory();
 
+        long expiryTime =
+                System.currentTimeMillis() + ttlMillis;
+
         try (BufferedWriter writer =
                      new BufferedWriter(
                              new FileWriter(AOF_FILE, true))) {
@@ -66,7 +69,7 @@ public class PersistenceService {
                             "|" +
                             encode(value) +
                             "|" +
-                            ttlMillis
+                            expiryTime
             );
 
             writer.newLine();
@@ -186,7 +189,6 @@ public class PersistenceService {
 
                     continue;
                 }
-
                 if (line.startsWith("SET_TTL|")) {
 
                     String[] parts =
@@ -200,15 +202,24 @@ public class PersistenceService {
                         String value =
                                 decode(parts[2]);
 
-                        long ttl =
+                        long expiryTime =
                                 Long.parseLong(parts[3]);
 
-                        if (ttl > 0) {
-                            cache.set(key, value, ttl);
+                        long remainingTTL =
+                                expiryTime -
+                                        System.currentTimeMillis();
+
+                        if (remainingTTL > 0) {
+
+                            cache.set(
+                                    key,
+                                    value,
+                                    remainingTTL
+                            );
                         }
                     }
-
-                } else if (line.startsWith("SET|")) {
+                }
+               else if (line.startsWith("SET|")) {
 
                     String[] parts =
                             line.split("\\|", 3);
