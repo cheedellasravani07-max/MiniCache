@@ -1775,6 +1775,7 @@ async function login() {
 // ------------------------------------------
 
             showAdminPanel();
+            showPersistenceStatus();
             loadAdminStats();
             loadAdminUsers();
             // ------------------------------------------
