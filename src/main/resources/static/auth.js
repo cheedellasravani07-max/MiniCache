@@ -1,15 +1,29 @@
 const API_URL = "https://minicache-api.onrender.com";
 
 
-// =====================================================
+// ======================================================
+// EMAILJS
+// ======================================================
+
+(function () {
+
+    emailjs.init({
+        publicKey: "h2Lav4SdA_A_tQL7f"
+    });
+
+})();
+
+
+// ======================================================
 // PASSWORD VISIBILITY
-// =====================================================
+// ======================================================
 
 const togglePassword =
     document.getElementById("togglePassword");
 
 const signupPassword =
     document.getElementById("signupPassword");
+
 
 if (togglePassword && signupPassword) {
 
@@ -21,7 +35,9 @@ if (togglePassword && signupPassword) {
                 signupPassword.type === "password";
 
             signupPassword.type =
-                isPassword ? "text" : "password";
+                isPassword
+                    ? "text"
+                    : "password";
 
             togglePassword.classList.toggle(
                 "fa-eye"
@@ -30,17 +46,19 @@ if (togglePassword && signupPassword) {
             togglePassword.classList.toggle(
                 "fa-eye-slash"
             );
+
         }
     );
 }
 
 
-// =====================================================
+// ======================================================
 // SIGNUP
-// =====================================================
+// ======================================================
 
 const signupForm =
     document.getElementById("signupForm");
+
 
 if (signupForm) {
 
@@ -50,11 +68,13 @@ if (signupForm) {
 
             event.preventDefault();
 
+
             const username =
                 document
                     .getElementById("signupUsername")
                     .value
                     .trim();
+
 
             const email =
                 document
@@ -62,16 +82,22 @@ if (signupForm) {
                     .value
                     .trim();
 
+
             const password =
                 document
                     .getElementById("signupPassword")
                     .value;
+
 
             const message =
                 document.getElementById(
                     "signupMessage"
                 );
 
+
+            // -------------------------------
+            // VALIDATION
+            // -------------------------------
 
             if (!username) {
 
@@ -93,6 +119,7 @@ if (signupForm) {
 
             const emailPattern =
                 /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 
             if (!emailPattern.test(email)) {
 
@@ -118,6 +145,10 @@ if (signupForm) {
 
             try {
 
+                // ==================================================
+                // REGISTER USER
+                // ==================================================
+
                 const response =
                     await fetch(
                         `${API_URL}/auth/register`,
@@ -130,9 +161,16 @@ if (signupForm) {
                             },
 
                             body: JSON.stringify({
-                                username: username,
-                                email: email,
-                                password: password
+
+                                username:
+                                username,
+
+                                email:
+                                email,
+
+                                password:
+                                password
+
                             })
                         }
                     );
@@ -142,36 +180,137 @@ if (signupForm) {
                     await response.json();
 
 
-                if (response.ok && data.success) {
+                console.log(
+                    "Registration response:",
+                    data
+                );
 
-                    message.textContent =
-                        "Account created successfully! Redirecting to login...";
 
-                    setTimeout(() => {
-
-                        window.location.href =
-                            "login.html";
-
-                    }, 1500);
-
-                } else {
+                if (
+                    !response.ok ||
+                    !data.success
+                ) {
 
                     message.textContent =
                         data.message ||
                         "Registration failed.";
 
+                    return;
                 }
+
+
+                // ==================================================
+                // VERIFICATION TOKEN
+                // ==================================================
+
+                const verificationToken =
+                    data.verificationToken;
+
+
+                if (!verificationToken) {
+
+                    console.error(
+                        "Verification token missing from backend response.",
+                        data
+                    );
+
+                    message.textContent =
+                        "Account created, but verification token was not received.";
+
+                    return;
+                }
+
+
+                // ==================================================
+                // VERIFICATION LINK
+                // ==================================================
+
+                const verificationLink =
+                    `${API_URL}/verify-email.html?token=${encodeURIComponent(
+                        verificationToken
+                    )}`;
+
+
+                console.log(
+                    "Verification link:",
+                    verificationLink
+                );
+
+
+                // ==================================================
+                // SEND VERIFICATION EMAIL
+                // ==================================================
+
+                message.textContent =
+                    "Account created. Sending verification email...";
+
+
+                await emailjs.send(
+                    "service_om680x9",
+                    "template_p8kbb3d",
+                    {
+
+                        name:
+                        username,
+
+                        email:
+                        email,
+
+                        verification_link:
+                        verificationLink
+
+                    }
+                );
+
+
+                // ==================================================
+                // SUCCESS
+                // ==================================================
+
+                message.textContent =
+                    "Registration successful! Verification email sent. Please check your inbox.";
+
+
+                // Clear fields
+
+                document.getElementById(
+                    "signupUsername"
+                ).value = "";
+
+
+                document.getElementById(
+                    "signupEmail"
+                ).value = "";
+
+
+                document.getElementById(
+                    "signupPassword"
+                ).value = "";
+
+
+                // Redirect to login
+
+                setTimeout(
+                    () => {
+
+                        window.location.href =
+                            "login.html";
+
+                    },
+                    2000
+                );
+
 
             } catch (error) {
 
                 console.error(
-                    "Signup error:",
+                    "Registration / EmailJS error:",
                     error
                 );
 
-                message.textContent =
-                    "Unable to connect to the server.";
 
+                message.textContent =
+                    "Account was created, but the verification email could not be sent. Please check EmailJS configuration.";
             }
 
         }
@@ -179,12 +318,15 @@ if (signupForm) {
 }
 
 
-// =====================================================
+// ======================================================
 // GO TO LOGIN
-// =====================================================
+// ======================================================
 
 const goToLogin =
-    document.getElementById("goToLogin");
+    document.getElementById(
+        "goToLogin"
+    );
+
 
 if (goToLogin) {
 
