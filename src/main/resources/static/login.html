@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>MiniCache | Login</title>
+
+    <link rel="stylesheet"
+          href="auth.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="auth-page">
+
+    <!-- BRAND -->
+
+    <div class="auth-brand">
+
+        <div class="brand-logo">
+            <i class="fa-solid fa-database"></i>
+        </div>
+
+        <div>
+
+            <h1>MiniCache</h1>
+
+            <p>
+                High-Performance In-Memory Cache
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- LOGIN CARD -->
+
+    <div class="auth-card">
+
+        <div class="auth-icon">
+
+            <i class="fa-solid fa-right-to-bracket"></i>
+
+        </div>
+
+
+        <h2>Welcome back</h2>
+
+        <p class="subtitle">
+            Choose how you want to sign in
+        </p>
+
+
+        <!-- LOGIN TYPE -->
+
+        <div class="login-options">
+
+            <button
+                    class="login-option active"
+                    id="userLoginOption">
+
+                <i class="fa-solid fa-user"></i>
+
+                <span>
+                        <strong>User Login</strong>
+                        <small>Access your cache dashboard</small>
+                    </span>
+
+            </button>
+
+
+            <button
+                    class="login-option"
+                    id="adminLoginOption">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                <span>
+                        <strong>Admin Login</strong>
+                        <small>Manage users and system</small>
+                    </span>
+
+            </button>
+
+        </div>
+
+
+        <!-- LOGIN FORM -->
+
+        <form id="loginForm">
+
+            <div class="input-group">
+
+                <label>
+                    Username
+                </label>
+
+                <div class="input-box">
+
+                    <i class="fa-solid fa-user"></i>
+
+                    <input
+                            type="text"
+                            id="loginUsername"
+                            placeholder="Enter username"
+                            required>
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Password
+                </label>
+
+                <div class="input-box">
+
+                    <i class="fa-solid fa-lock"></i>
+
+                    <input
+                            type="password"
+                            id="loginPassword"
+                            placeholder="Enter password"
+                            required>
+
+                    <i
+                            class="fa-solid fa-eye password-toggle"
+                            id="loginPasswordToggle">
+                    </i>
+
+                </div>
+
+            </div>
+
+
+            <div class="login-extra">
+
+                <a href="#"
+                   id="forgotPasswordLink">
+
+                    Forgot Password?
+
+                </a>
+
+            </div>
+
+
+            <button
+                    type="submit"
+                    class="primary-btn">
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                <span id="loginButtonText">
+                        Sign In
+                    </span>
+
+            </button>
+
+
+            <p
+                    id="loginMessage"
+                    class="auth-message">
+            </p>
+
+        </form>
+
+
+        <!-- SIGNUP -->
+
+        <div class="divider">
+
+            <span>New to MiniCache?</span>
+
+        </div>
+
+
+        <button
+                class="secondary-btn"
+                id="goToSignup">
+
+            <i class="fa-solid fa-user-plus"></i>
+
+            Create Account
+
+        </button>
+
+    </div>
+
+
+    <p class="footer-text">
+
+        © 2026 MiniCache · Secure · Fast · Reliable
+
+    </p>
+
+</div>
+
+
+<script src="login.js"></script>
+
+</body>
+
+</html>

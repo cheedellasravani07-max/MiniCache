@@ -2,20 +2,43 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>MiniCache Dashboard</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+    <title>MiniCache | Dashboard</title>
+
+    <!-- Main CSS -->
+    <link rel="stylesheet"
+          href="style.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 </head>
 
-<body>
-<!-- Registration Section -->
 
-<section id="registerSection" class="login-container">
+<body>
+
+
+<!-- ===================================================== -->
+<!-- LEGACY AUTH SECTIONS                                  -->
+<!-- Kept so existing script.js authentication/reset      -->
+<!-- password functions do not break.                     -->
+<!-- ===================================================== -->
+
+<section id="registerSection"
+         class="login-container"
+         style="display: none;">
 
     <h1>Create Account</h1>
 
@@ -40,19 +63,30 @@
             placeholder="Enter Password"
             autocomplete="new-password"
     >
-    <button type="button" onclick="registerUser()">
+
+    <button
+            type="button"
+            onclick="registerUser()">
+
         Create Account
+
     </button>
+
     <p id="registerMessage"></p>
 
-    <a href="#" id="backToLoginFromRegister">
+    <a href="#"
+       id="backToLoginFromRegister">
+
         Already have an account? Login
+
     </a>
 
 </section>
-<!-- Login Section -->
 
-<section id="loginSection" class="login-container">
+
+<section id="loginSection"
+         class="login-container"
+         style="display: none;">
 
     <h1>MiniCache Login</h1>
 
@@ -71,20 +105,35 @@
             autocomplete="current-password"
     >
 
-    <button type="button" onclick="login()">Sign In</button>
+    <button
+            type="button"
+            onclick="login()">
 
-    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+        Sign In
+
+    </button>
+
+    <a href="#"
+       id="forgotPasswordLink">
+
+        Forgot Password?
+
+    </a>
 
     <p id="loginMessage"></p>
 
 </section>
-<!-- Forgot Password Section -->
 
-<section id="forgotPasswordSection" class="login-container" style="display: none;">
+
+<section id="forgotPasswordSection"
+         class="login-container"
+         style="display: none;">
 
     <h1>Forgot Password</h1>
 
-    <p>Enter your username to reset your password.</p>
+    <p>
+        Enter your username to reset your password.
+    </p>
 
     <input
             type="text"
@@ -92,18 +141,25 @@
             placeholder="Enter Username"
     >
 
-    <button type="button" onclick="requestPasswordReset()">
+    <button
+            type="button"
+            onclick="requestPasswordReset()">
+
         Send Reset Request
+
     </button>
 
     <p id="forgotPasswordMessage"></p>
 
-    <a href="#" id="backToLogin">
+    <a href="#"
+       id="backToLogin">
+
         Back to Login
+
     </a>
 
 </section>
-<!-- Reset Password Section -->
+
 
 <section id="resetPasswordSection"
          class="login-container"
@@ -111,7 +167,9 @@
 
     <h1>Reset Password</h1>
 
-    <p>Enter your reset token and new password.</p>
+    <p>
+        Enter your reset token and new password.
+    </p>
 
     <input
             type="text"
@@ -131,535 +189,2329 @@
             placeholder="Confirm New Password"
     >
 
-    <button type="button" onclick="resetPassword()">
+    <button
+            type="button"
+            onclick="resetPassword()">
+
         Reset Password
+
     </button>
 
     <p id="resetPasswordMessage"></p>
 
-    <a href="#" id="resetBackToLogin">
+    <a href="#"
+       id="resetBackToLogin">
+
         Back to Login
+
     </a>
 
 </section>
-<div id="dashboardSection" style="display: none;">
-<header>
-    <h1>MiniCache</h1>
-    <p>In-Memory Cache Management Dashboard</p>
-    <div class="user-role">
-        Role:
-        <span id="userRole">---</span>
-    </div>
 
-    <div class="backend-status">
 
-        Backend Status:
-        <span id="backendStatus">Checking...</span>
-    </div>
-    <div class="last-updated">
-        Last Updated:
-        <span id="lastUpdated">--</span>
-    </div>
-    <!-- Logout Button -->
-    <button onclick="logout()" class="logout-button">
-        Logout
-    </button>
-</header>
-<main>
 
-    <!-- Cache Information -->
+<!-- ===================================================== -->
+<!-- DASHBOARD                                             -->
+<!-- ===================================================== -->
 
-    <section class="dashboard">
+<div id="dashboardSection"
+     class="dashboard-app"
+     style="display: none;">
 
-        <div class="card">
-            <h3>Cache Size</h3>
-            <p id="cacheSize">0</p>
-        </div>
 
-        <div class="card">
-            <h3>Capacity</h3>
-            <p id="capacity">0</p>
-        </div>
+    <!-- ================================================= -->
+    <!-- SIDEBAR                                           -->
+    <!-- ================================================= -->
 
-        <div class="card">
-            <h3>Cache Hits</h3>
-            <p id="hits">0</p>
-        </div>
+    <aside class="sidebar">
 
-        <div class="card">
-            <h3>Cache Misses</h3>
-            <p id="misses">0</p>
-        </div>
 
-        <div class="card">
-            <h3>Hit Rate</h3>
-            <p id="hitRate">0%</p>
-        </div>
-        <div class="card">
-            <h3>Evictions</h3>
-            <p id="evictions">0</p>
-        </div>
+        <!-- BRAND -->
 
-    </section>
-    <!-- Cache Entries -->
+        <div class="sidebar-brand">
 
-    <section class="panel">
+            <div class="brand-icon">
 
-        <h2>Current Cache Entries</h2>
+                <i class="fa-solid fa-database"></i>
 
-        <div class="table-container">
+            </div>
 
-            <table>
+            <div class="brand-text">
 
-                <thead>
-                <tr>
-                    <th>Key</th>
-                    <th>Value</th>
-                </tr>
-                </thead>
+                <h2>MiniCache</h2>
 
-                <tbody id="cacheEntries">
-                </tbody>
+                <span>
+                    In-Memory Cache
+                </span>
 
-            </table>
+            </div>
 
         </div>
 
-    </section>
 
-    <!-- Add Cache Entry -->
+        <!-- NAVIGATION -->
 
-    <section class="panel">
+        <nav class="sidebar-nav">
 
-        <h2>Add / Update Cache Entry</h2>
 
-        <div class="form">
+            <a href="#overview"
+               class="nav-item active">
 
-            <input
-                    type="text"
-                    id="key"
-                    placeholder="Enter key"
-            >
+                <i class="fa-solid fa-chart-pie"></i>
 
-            <input
-                    type="text"
-                    id="value"
-                    placeholder="Enter value"
-            >
+                <span>
+                    Overview
+                </span>
 
-            <input
-                    type="number"
-                    id="ttl"
-                    placeholder="TTL in milliseconds (optional)"
-            >
+            </a>
 
-            <button onclick="setCache()">
-                Add / Update
+
+            <a href="#cacheManagement"
+               class="nav-item">
+
+                <i class="fa-solid fa-database"></i>
+
+                <span>
+                    Cache Management
+                </span>
+
+            </a>
+
+
+            <a href="#cacheEntriesSection"
+               class="nav-item">
+
+                <i class="fa-solid fa-table-list"></i>
+
+                <span>
+                    Cache Entries
+                </span>
+
+            </a>
+
+
+            <a href="#performanceSection"
+               class="nav-item">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+                <span>
+                    Performance
+                </span>
+
+            </a>
+
+
+            <a href="#activitySection"
+               class="nav-item">
+
+                <i class="fa-solid fa-clock-rotate-left"></i>
+
+                <span>
+                    Activity
+                </span>
+
+            </a>
+
+
+            <a href="#lruSection"
+               class="nav-item">
+
+                <i class="fa-solid fa-list-ol"></i>
+
+                <span>
+                    LRU Cache
+                </span>
+
+            </a>
+
+
+            <a href="#ttlSection"
+               class="nav-item">
+
+                <i class="fa-solid fa-hourglass-half"></i>
+
+                <span>
+                    TTL
+                </span>
+
+            </a>
+
+
+            <a href="#persistenceSection"
+               class="nav-item">
+
+                <i class="fa-solid fa-hard-drive"></i>
+
+                <span>
+                    Persistence
+                </span>
+
+            </a>
+
+
+            <div class="nav-divider"></div>
+
+
+            <a href="#adminPanel"
+               id="adminNavItem"
+               class="nav-item admin-nav-item"
+               style="display: none;">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                <span>
+                    Admin Panel
+                </span>
+
+            </a>
+
+        </nav>
+
+
+        <!-- SIDEBAR BOTTOM -->
+
+        <div class="sidebar-bottom">
+
+
+            <div class="sidebar-user">
+
+                <div class="sidebar-avatar">
+
+                    <i class="fa-solid fa-user"></i>
+
+                </div>
+
+
+                <div class="sidebar-user-info">
+
+                    <strong id="sidebarUsername">
+                        User
+                    </strong>
+
+                    <span id="sidebarRole">
+                        USER
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <button
+                    onclick="logout()"
+                    class="sidebar-logout">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                <span>
+                    Logout
+                </span>
+
             </button>
 
         </div>
 
-    </section>
+    </aside>
 
-    <!-- Bulk Cache Operations -->
 
-    <section class="panel">
 
-        <h2>Bulk Cache Operations</h2>
+    <!-- ================================================= -->
+    <!-- MAIN CONTENT                                      -->
+    <!-- ================================================= -->
 
-        <p>
-            Add multiple cache entries at once using JSON format.
-        </p>
+    <main class="main-content">
 
-        <textarea
-                id="bulkEntries"
-                rows="6"
-                placeholder='Enter JSON, for example:
-{
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+
+            <div class="topbar-left">
+
+                <span class="page-label">
+                    MINICACHE DASHBOARD
+                </span>
+
+                <h1>
+                    Cache Overview
+                </h1>
+
+                <p>
+                    Monitor and manage your
+                    in-memory cache.
+                </p>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+
+                <!-- Backend Status -->
+
+                <div class="backend-status-card">
+
+                    <span class="status-indicator"></span>
+
+                    <div>
+
+                        <small>
+                            Backend
+                        </small>
+
+                        <strong id="backendStatus">
+                            Checking...
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- User -->
+
+                <div class="profile-card">
+
+                    <div class="profile-avatar">
+
+                        <i class="fa-solid fa-user"></i>
+
+                    </div>
+
+
+                    <div class="profile-info">
+
+                        <strong id="dashboardUsername">
+                            User
+                        </strong>
+
+                        <span id="userRole">
+                            ---
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- ================================================= -->
+        <!-- OVERVIEW                                          -->
+        <!-- ================================================= -->
+
+        <section id="overview"
+                 class="dashboard-section">
+
+
+            <!-- Welcome Banner -->
+
+            <div class="welcome-banner">
+
+
+                <div class="welcome-content">
+
+                    <span class="welcome-badge">
+
+                        <i class="fa-solid fa-bolt"></i>
+
+                        HIGH PERFORMANCE CACHE
+
+                    </span>
+
+
+                    <h2>
+                        Welcome back to MiniCache
+                    </h2>
+
+
+                    <p>
+                        Your in-memory cache is ready.
+                        Monitor performance, manage entries,
+                        and analyze cache behavior.
+                    </p>
+
+                </div>
+
+
+                <div class="welcome-graphic">
+
+                    <i class="fa-solid fa-server"></i>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- STATISTICS -->
+
+            <div class="stats-grid">
+
+
+                <!-- Cache Size -->
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">
+
+                        <i class="fa-solid fa-database"></i>
+
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            Cache Size
+                        </span>
+
+                        <strong id="cacheSize">
+                            0
+                        </strong>
+
+                        <small>
+                            Active entries
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Capacity -->
+
+                <div class="stat-card">
+
+                    <div class="stat-icon purple">
+
+                        <i class="fa-solid fa-layer-group"></i>
+
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            Capacity
+                        </span>
+
+                        <strong id="capacity">
+                            0
+                        </strong>
+
+                        <small>
+                            Maximum entries
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Hits -->
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+
+                        <i class="fa-solid fa-bullseye"></i>
+
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            Cache Hits
+                        </span>
+
+                        <strong id="hits">
+                            0
+                        </strong>
+
+                        <small>
+                            Successful requests
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Misses -->
+
+                <div class="stat-card">
+
+                    <div class="stat-icon orange">
+
+                        <i class="fa-solid fa-circle-xmark"></i>
+
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            Cache Misses
+                        </span>
+
+                        <strong id="misses">
+                            0
+                        </strong>
+
+                        <small>
+                            Unsuccessful requests
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Hit Rate -->
+
+                <div class="stat-card">
+
+                    <div class="stat-icon cyan">
+
+                        <i class="fa-solid fa-gauge-high"></i>
+
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            Hit Rate
+                        </span>
+
+                        <strong id="hitRate">
+                            0%
+                        </strong>
+
+                        <small>
+                            Cache efficiency
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Evictions -->
+
+                <div class="stat-card">
+
+                    <div class="stat-icon red">
+
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            Evictions
+                        </span>
+
+                        <strong id="evictions">
+                            0
+                        </strong>
+
+                        <small>
+                            LRU evictions
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- CACHE MANAGEMENT                                  -->
+        <!-- ================================================= -->
+
+        <section id="cacheManagement"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        CACHE MANAGEMENT
+                    </span>
+
+                    <h2>
+                        Manage Cache
+                    </h2>
+
+                </div>
+
+                <p>
+                    Set, retrieve, update and delete
+                    cache entries.
+                </p>
+
+            </div>
+
+
+
+            <div class="management-grid">
+
+
+                <!-- ADD / UPDATE -->
+
+                <div class="management-card">
+
+                    <div class="management-header">
+
+                        <div class="management-icon blue">
+
+                            <i class="fa-solid fa-plus"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Add / Update
+                            </h3>
+
+                            <p>
+                                Store a value in cache
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <input
+                            type="text"
+                            id="key"
+                            placeholder="Enter cache key"
+                    >
+
+
+                    <input
+                            type="text"
+                            id="value"
+                            placeholder="Enter value"
+                    >
+
+
+                    <input
+                            type="number"
+                            id="ttl"
+                            placeholder="TTL in milliseconds (optional)"
+                            min="1"
+                    >
+
+
+                    <button
+                            onclick="setCache()"
+                            class="action-button primary">
+
+                        <i class="fa-solid fa-floppy-disk"></i>
+
+                        Add / Update
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- GET -->
+
+                <div class="management-card">
+
+                    <div class="management-header">
+
+                        <div class="management-icon green">
+
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Get Cache Entry
+                            </h3>
+
+                            <p>
+                                Retrieve a cached value
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <input
+                            type="text"
+                            id="getKey"
+                            placeholder="Enter cache key"
+                    >
+
+
+                    <div id="getResult"
+                         class="result-box">
+
+                        Result will appear here
+
+                    </div>
+
+
+                    <button
+                            onclick="getCache()"
+                            class="action-button success">
+
+                        <i class="fa-solid fa-arrow-down"></i>
+
+                        Get Value
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- DELETE -->
+
+                <div class="management-card">
+
+                    <div class="management-header">
+
+                        <div class="management-icon red">
+
+                            <i class="fa-solid fa-trash"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Delete Entry
+                            </h3>
+
+                            <p>
+                                Remove a cache entry
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <input
+                            type="text"
+                            id="deleteKey"
+                            placeholder="Enter cache key"
+                    >
+
+
+                    <div id="deleteResult"
+                         class="result-box">
+
+                        Result will appear here
+
+                    </div>
+
+
+                    <button
+                            onclick="deleteCache()"
+                            class="action-button danger">
+
+                        <i class="fa-solid fa-trash"></i>
+
+                        Delete
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- CLEAR -->
+
+                <div class="management-card">
+
+                    <div class="management-header">
+
+                        <div class="management-icon orange">
+
+                            <i class="fa-solid fa-broom"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Clear Cache
+                            </h3>
+
+                            <p>
+                                Remove all cache entries
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="warning-box">
+
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+
+                        <span>
+                            This operation removes
+                            all cache entries.
+                        </span>
+
+                    </div>
+
+
+                    <button
+                            class="action-button warning"
+                            onclick="clearCache()">
+
+                        <i class="fa-solid fa-trash-can"></i>
+
+                        Clear Entire Cache
+
+                    </button>
+
+
+                    <p id="clearResult"
+                       class="operation-result">
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- BULK OPERATIONS                                   -->
+        <!-- ================================================= -->
+
+        <section id="bulkSection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        BATCH OPERATIONS
+                    </span>
+
+                    <h2>
+                        Bulk Cache Operations
+                    </h2>
+
+                </div>
+
+                <p>
+                    Add multiple cache entries using JSON.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+
+                <div class="feature-icon purple">
+
+                    <i class="fa-solid fa-layer-group"></i>
+
+                </div>
+
+
+                <div class="feature-content">
+
+                    <h3>
+                        Bulk Set Entries
+                    </h3>
+
+                    <p>
+                        Add multiple key-value pairs
+                        at once using JSON format.
+                    </p>
+
+
+                    <textarea
+                            id="bulkEntries"
+                            rows="7"
+                            placeholder='{
   "key1": "value1",
   "key2": "value2",
   "key3": "value3"
 }'></textarea>
 
-        <button onclick="bulkSetCache()">
-            Add Bulk Entries
-        </button>
 
-        <p id="bulkResult"></p>
+                    <button
+                            onclick="bulkSetCache()"
+                            class="action-button primary">
 
-    </section>
-    <!-- Concurrency Benchmark -->
+                        <i class="fa-solid fa-upload"></i>
 
-    <section class="panel">
+                        Add Bulk Entries
 
-        <h2>Concurrency Benchmark</h2>
+                    </button>
 
-        <p>
-            Test MiniCache performance with concurrent requests.
-        </p>
 
-        <div class="benchmark-input">
+                    <p id="bulkResult"
+                       class="operation-result">
+                    </p>
 
-            <input
-                    type="number"
-                    id="benchmarkRequests"
-                    placeholder="Number of requests"
-                    min="1"
-            />
+                </div>
 
-            <button onclick="runConcurrencyBenchmark()">
-                Run Benchmark
-            </button>
-
-        </div>
-
-        <div id="benchmarkResult"></div>
-
-    </section>
-
-    <!-- Get Cache Entry -->
-
-    <section class="panel">
-
-        <h2>Get Cache Entry</h2>
-
-        <div class="form">
-
-            <input
-                    type="text"
-                    id="getKey"
-                    placeholder="Enter key"
-            >
-
-            <button onclick="getCache()">
-                Get Value
-            </button>
-
-        </div>
-
-        <p id="getResult"></p>
-
-    </section>
-
-
-    <!-- Delete Cache Entry -->
-
-    <section class="panel">
-
-        <h2>Delete Cache Entry</h2>
-
-        <div class="form">
-
-            <input
-                    type="text"
-                    id="deleteKey"
-                    placeholder="Enter key"
-            >
-
-            <button onclick="deleteCache()">
-                Delete
-            </button>
-
-        </div>
-
-        <p id="deleteResult"></p>
-
-    </section>
-
-
-    <!-- Clear Cache -->
-
-    <section class="panel">
-
-        <h2>Cache Management</h2>
-
-        <button class="clear-button" onclick="clearCache()">
-            Clear Entire Cache
-        </button>
-
-        <p id="clearResult"></p>
-
-    </section>
-    <section class="panel">
-        <h2>LRU Eviction Demo</h2>
-
-        <p>
-            Demonstrate Least Recently Used (LRU) eviction
-            by filling the cache and adding one extra entry.
-        </p>
-
-        <button onclick="runLRUDemo()">
-            Run LRU Demo
-        </button>
-
-        <p id="lruDemoResult"></p>
-    </section>
-    <!-- LRU Order -->
-
-    <section class="panel">
-
-        <h2>LRU Cache Order</h2>
-
-        <p>
-            Current cache order from Most Recently Used (MRU)
-            to Least Recently Used (LRU).
-        </p>
-
-        <div id="lruOrder" class="lru-order">
-            Loading LRU order...
-        </div>
-
-    </section>
-    <!-- Cache Activity Monitor -->
-
-    <section class="panel">
-
-        <h2>Cache Activity</h2>
-        <button class="clear-activity-button" onclick="clearActivity()">
-            Clear Activity
-        </button>
-        <div class="activity-container">
-
-            <table>
-
-                <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Operation</th>
-                    <th>Key</th>
-                    <th>Status</th>
-                </tr>
-                </thead>
-
-                <tbody id="cacheActivity">
-
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
-    <!-- TTL Expiry Demo -->
-
-    <section class="panel">
-
-        <h2>TTL Expiry Demo</h2>
-
-        <p>
-            Demonstrate automatic cache expiration using
-            Time-To-Live (TTL).
-        </p>
-
-        <div class="form">
-
-            <input
-                    type="number"
-                    id="ttlDemoInput"
-                    placeholder="TTL in milliseconds"
-                    value="5000"
-                    min="1000"
-            >
-
-            <button onclick="runTTLDemo()">
-                Run TTL Demo
-            </button>
-
-        </div>
-
-        <p id="ttlDemoResult"></p>
-
-    </section>
-    <!-- Cache Performance Summary -->
-
-    <section class="panel">
-
-        <h2>Cache Performance</h2>
-
-        <div class="performance-grid">
-
-            <div class="performance-item">
-                <span>Total Requests</span>
-                <strong id="totalRequests">0</strong>
             </div>
 
-            <div class="performance-item">
-                <span>Hit Rate</span>
-                <strong id="performanceHitRate">0%</strong>
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- CONCURRENCY BENCHMARK                             -->
+        <!-- ================================================= -->
+
+        <section id="benchmarkSection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        PERFORMANCE TESTING
+                    </span>
+
+                    <h2>
+                        Concurrency Benchmark
+                    </h2>
+
+                </div>
+
+                <p>
+                    Test MiniCache under concurrent requests.
+                </p>
+
             </div>
 
-            <div class="performance-item">
-                <span>Miss Rate</span>
-                <strong id="missRate">0%</strong>
+
+            <div class="feature-card">
+
+
+                <div class="feature-icon cyan">
+
+                    <i class="fa-solid fa-gauge-high"></i>
+
+                </div>
+
+
+                <div class="feature-content">
+
+                    <h3>
+                        Concurrent Request Test
+                    </h3>
+
+                    <p>
+                        Measure cache performance with
+                        multiple simultaneous requests.
+                    </p>
+
+
+                    <div class="inline-form">
+
+                        <input
+                                type="number"
+                                id="benchmarkRequests"
+                                placeholder="Number of requests"
+                                min="1"
+                        >
+
+
+                        <button
+                                onclick="runConcurrencyBenchmark()"
+                                class="action-button primary">
+
+                            <i class="fa-solid fa-play"></i>
+
+                            Run Benchmark
+
+                        </button>
+
+                    </div>
+
+
+                    <div id="benchmarkResult"
+                         class="benchmark-result">
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="performance-item">
-                <span>Cache Usage</span>
-                <strong id="cacheUsage">0%</strong>
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- CACHE ENTRIES                                    -->
+        <!-- ================================================= -->
+
+        <section id="cacheEntriesSection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        CACHE DATA
+                    </span>
+
+                    <h2>
+                        Current Cache Entries
+                    </h2>
+
+                </div>
+
+
+                <div class="live-indicator">
+
+                    <span></span>
+
+                    LIVE
+
+                </div>
+
             </div>
 
-            <div class="performance-item">
-                <span>Evictions</span>
-                <strong id="performanceEvictions">0</strong>
+
+            <div class="table-card">
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Key
+                            </th>
+
+                            <th>
+                                Value
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+
+                        <tbody id="cacheEntries">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
             </div>
 
-        </div>
+        </section>
 
-        <p id="performanceMessage">
-            Waiting for cache activity...
-        </p>
 
-    </section>
-    <!-- Real-Time Metrics -->
 
-    <section class="panel">
+        <!-- ================================================= -->
+        <!-- LRU DEMO                                          -->
+        <!-- ================================================= -->
 
-        <h2>Real-Time Cache Metrics</h2>
+        <section id="lruDemoSection"
+                 class="dashboard-section">
 
-        <canvas id="metricsChart"></canvas>
 
-    </section>
-    <div class="cache-health">
-        <strong>Cache Health:</strong>
-        <span id="cacheHealth">Checking...</span>
-    </div>
-    <!-- Persistence Status -->
+            <div class="section-heading">
 
-    <section class="panel">
+                <div>
 
-        <h2>Persistence</h2>
+                    <span>
+                        DATA STRUCTURES
+                    </span>
 
-        <p>
-            Cache data is automatically saved and restored
-            when the backend restarts.
-        </p>
+                    <h2>
+                        LRU Eviction Demo
+                    </h2>
 
-        <p>
-            <strong>Status:</strong>
-            <span id="persistenceStatus">Enabled</span>
-        </p>
+                </div>
 
-    </section>
-    <!-- Admin Panel -->
-    <section id="adminPanel" class="panel" style="display: none;">
-
-        <h2>Admin Panel</h2>
-
-        <p>
-            This section is available only to administrators.
-        </p>
-        <!-- Admin Statistics -->
-
-        <div class="admin-stats">
-
-            <div class="admin-stat-card">
-                <h3>Total Users</h3>
-                <p id="adminTotalUsers">0</p>
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Admins</h3>
-                <p id="adminTotalAdmins">0</p>
+
+            <div class="demo-card">
+
+
+                <div class="demo-icon">
+
+                    <i class="fa-solid fa-arrows-rotate"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        Least Recently Used Eviction
+                    </h3>
+
+                    <p>
+                        Demonstrate LRU eviction by filling
+                        the cache and adding one extra entry.
+                    </p>
+
+
+                    <button
+                            onclick="runLRUDemo()"
+                            class="action-button purple-button">
+
+                        <i class="fa-solid fa-play"></i>
+
+                        Run LRU Demo
+
+                    </button>
+
+
+                    <p id="lruDemoResult"
+                       class="operation-result">
+                    </p>
+
+                </div>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Normal Users</h3>
-                <p id="adminTotalNormalUsers">0</p>
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- LRU ORDER                                         -->
+        <!-- ================================================= -->
+
+        <section id="lruSection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        LRU DATA STRUCTURE
+                    </span>
+
+                    <h2>
+                        LRU Cache Order
+                    </h2>
+
+                </div>
+
+                <p>
+                    Most Recently Used → Least Recently Used
+                </p>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Verified</h3>
-                <p id="adminVerifiedUsers">0</p>
+
+            <div class="lru-card">
+
+                <div id="lruOrder"
+                     class="lru-order">
+
+                    Loading LRU order...
+
+                </div>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Unverified</h3>
-                <p id="adminUnverifiedUsers">0</p>
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- ACTIVITY                                          -->
+        <!-- ================================================= -->
+
+        <section id="activitySection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        MONITORING
+                    </span>
+
+                    <h2>
+                        Cache Activity
+                    </h2>
+
+                </div>
+
+
+                <button
+                        class="small-action-button"
+                        onclick="clearActivity()">
+
+                    <i class="fa-solid fa-eraser"></i>
+
+                    Clear Activity
+
+                </button>
+
             </div>
 
-        </div>
-        <!-- Cache Statistics -->
 
-        <h3 class="admin-section-title">
-            Cache Statistics
-        </h3>
+            <div class="table-card">
 
-        <div class="admin-stats">
+                <div class="table-container">
 
-            <div class="admin-stat-card">
-                <h3>Cache Size</h3>
-                <p id="adminCacheSize">0</p>
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Time
+                            </th>
+
+                            <th>
+                                Operation
+                            </th>
+
+                            <th>
+                                Key
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+
+                        <tbody id="cacheActivity">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Cache Capacity</h3>
-                <p id="adminCacheCapacity">0</p>
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- TTL DEMO                                          -->
+        <!-- ================================================= -->
+
+        <section id="ttlSection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        TTL MANAGEMENT
+                    </span>
+
+                    <h2>
+                        TTL Expiry Demo
+                    </h2>
+
+                </div>
+
+                <p>
+                    Test automatic Time-To-Live expiration.
+                </p>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Cache Hits</h3>
-                <p id="adminCacheHits">0</p>
+
+            <div class="demo-card">
+
+
+                <div class="demo-icon orange-icon">
+
+                    <i class="fa-solid fa-hourglass-half"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        Time-To-Live Expiration
+                    </h3>
+
+                    <p>
+                        Demonstrate automatic expiration
+                        of cache entries after a specified TTL.
+                    </p>
+
+
+                    <div class="inline-form">
+
+                        <input
+                                type="number"
+                                id="ttlDemoInput"
+                                placeholder="TTL in milliseconds"
+                                value="5000"
+                                min="1000"
+                        >
+
+
+                        <button
+                                onclick="runTTLDemo()"
+                                class="action-button warning">
+
+                            <i class="fa-solid fa-play"></i>
+
+                            Run TTL Demo
+
+                        </button>
+
+                    </div>
+
+
+                    <p id="ttlDemoResult"
+                       class="operation-result">
+                    </p>
+
+                </div>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Cache Misses</h3>
-                <p id="adminCacheMisses">0</p>
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- PERFORMANCE                                      -->
+        <!-- ================================================= -->
+
+        <section id="performanceSection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        ANALYTICS
+                    </span>
+
+                    <h2>
+                        Cache Performance
+                    </h2>
+
+                </div>
+
+
+                <span id="performanceMessage"
+                      class="performance-message">
+
+                    Waiting for cache activity...
+
+                </span>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Hit Rate</h3>
-                <p id="adminCacheHitRate">0%</p>
+
+            <div class="performance-grid">
+
+
+                <div class="performance-card">
+
+                    <div class="performance-card-icon blue">
+
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+
+                    </div>
+
+                    <span>
+                        Total Requests
+                    </span>
+
+                    <strong id="totalRequests">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="performance-card">
+
+                    <div class="performance-card-icon green">
+
+                        <i class="fa-solid fa-bullseye"></i>
+
+                    </div>
+
+                    <span>
+                        Hit Rate
+                    </span>
+
+                    <strong id="performanceHitRate">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="performance-card">
+
+                    <div class="performance-card-icon orange">
+
+                        <i class="fa-solid fa-circle-xmark"></i>
+
+                    </div>
+
+                    <span>
+                        Miss Rate
+                    </span>
+
+                    <strong id="missRate">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="performance-card">
+
+                    <div class="performance-card-icon purple">
+
+                        <i class="fa-solid fa-database"></i>
+
+                    </div>
+
+                    <span>
+                        Cache Usage
+                    </span>
+
+                    <strong id="cacheUsage">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="performance-card">
+
+                    <div class="performance-card-icon red">
+
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+
+                    </div>
+
+                    <span>
+                        Evictions
+                    </span>
+
+                    <strong id="performanceEvictions">
+                        0
+                    </strong>
+
+                </div>
+
             </div>
 
-            <div class="admin-stat-card">
-                <h3>Evictions</h3>
-                <p id="adminCacheEvictions">0</p>
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- REAL-TIME METRICS                                -->
+        <!-- ================================================= -->
+
+        <section id="metricsSection"
+                 class="dashboard-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        REAL-TIME ANALYTICS
+                    </span>
+
+                    <h2>
+                        Cache Metrics
+                    </h2>
+
+                </div>
+
+                <div class="chart-status">
+
+                    <span></span>
+
+                    Updating
+
+                </div>
+
             </div>
 
-        </div>
-        <!-- Admin User Management -->
 
-        <h3 class="admin-section-title">
-            User Management
-        </h3>
+            <div class="chart-card">
 
-        <div class="admin-users-table-container">
+                <canvas id="metricsChart"></canvas>
 
-            <table id="adminUsersTable">
+            </div>
 
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Verified</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
+        </section>
 
-                <tbody id="adminUsersTableBody">
-                <tr>
-                    <td colspan="6">
-                        Loading users...
-                    </td>
-                </tr>
-                </tbody>
 
-            </table>
 
-        </div>
-        <button onclick="testAdminAccess()">
-            Test Admin Authorization
-        </button>
+        <!-- ================================================= -->
+        <!-- CACHE HEALTH                                      -->
+        <!-- ================================================= -->
 
-        <p id="adminTestResult"></p>
+        <section id="healthSection"
+                 class="dashboard-section">
 
-    </section>
-</main>
+
+            <div class="health-grid">
+
+
+                <div class="health-card">
+
+                    <div class="health-icon blue">
+
+                        <i class="fa-solid fa-server"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Backend Status
+                        </span>
+
+                        <strong id="backendHealth">
+                            <span id="backendStatusHealth">
+                                Checking...
+                            </span>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="health-card">
+
+                    <div class="health-icon green">
+
+                        <i class="fa-solid fa-heart-pulse"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Cache Health
+                        </span>
+
+                        <strong id="cacheHealth">
+                            Checking...
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="health-card">
+
+                    <div class="health-icon purple">
+
+                        <i class="fa-solid fa-clock"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Last Updated
+                        </span>
+
+                        <strong id="lastUpdated">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Existing cache health compatibility -->
+
+            <div class="cache-health"
+                 style="display: none;">
+
+                <strong>
+                    Cache Health:
+                </strong>
+
+                <span id="cacheHealthLegacy">
+                    Checking...
+                </span>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- PERSISTENCE                                      -->
+        <!-- ================================================= -->
+
+        <section id="persistenceSection"
+                 class="dashboard-section">
+
+
+            <div class="persistence-card">
+
+
+                <div class="persistence-icon">
+
+                    <i class="fa-solid fa-hard-drive"></i>
+
+                </div>
+
+
+                <div class="persistence-content">
+
+                    <span class="section-kicker">
+                        DATA SAFETY
+                    </span>
+
+                    <h2>
+                        Persistence
+                    </h2>
+
+
+                    <p>
+                        Cache data is automatically saved
+                        and restored when the backend restarts.
+                    </p>
+
+
+                    <div class="persistence-status">
+
+                        <span>
+                            Status
+                        </span>
+
+                        <strong id="persistenceStatus">
+                            Enabled
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- ADMIN PANEL                                      -->
+        <!-- ================================================= -->
+
+        <section id="adminPanel"
+                 class="dashboard-section admin-panel"
+                 style="display: none;">
+
+
+            <div class="admin-header">
+
+
+                <div>
+
+                    <span class="admin-badge">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                        ADMINISTRATOR
+
+                    </span>
+
+
+                    <h2>
+                        Admin Control Center
+                    </h2>
+
+
+                    <p>
+                        Manage users and monitor
+                        system-wide cache statistics.
+                    </p>
+
+                </div>
+
+
+                <div class="admin-header-icon">
+
+                    <i class="fa-solid fa-user-shield"></i>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- USER STATISTICS -->
+
+            <h3 class="admin-section-title">
+
+                <i class="fa-solid fa-users"></i>
+
+                User Statistics
+
+            </h3>
+
+
+            <div class="admin-stats">
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon blue">
+
+                        <i class="fa-solid fa-users"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Total Users
+                        </span>
+
+                        <strong id="adminTotalUsers">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon purple">
+
+                        <i class="fa-solid fa-user-shield"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Admins
+                        </span>
+
+                        <strong id="adminTotalAdmins">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon green">
+
+                        <i class="fa-solid fa-user"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Normal Users
+                        </span>
+
+                        <strong id="adminTotalNormalUsers">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon cyan">
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Verified
+                        </span>
+
+                        <strong id="adminVerifiedUsers">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon orange">
+
+                        <i class="fa-solid fa-circle-exclamation"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Unverified
+                        </span>
+
+                        <strong id="adminUnverifiedUsers">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- CACHE STATISTICS -->
+
+            <h3 class="admin-section-title">
+
+                <i class="fa-solid fa-database"></i>
+
+                Cache Statistics
+
+            </h3>
+
+
+            <div class="admin-stats">
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon blue">
+
+                        <i class="fa-solid fa-database"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Cache Size
+                        </span>
+
+                        <strong id="adminCacheSize">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon purple">
+
+                        <i class="fa-solid fa-layer-group"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Cache Capacity
+                        </span>
+
+                        <strong id="adminCacheCapacity">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon green">
+
+                        <i class="fa-solid fa-bullseye"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Cache Hits
+                        </span>
+
+                        <strong id="adminCacheHits">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon orange">
+
+                        <i class="fa-solid fa-circle-xmark"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Cache Misses
+                        </span>
+
+                        <strong id="adminCacheMisses">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon cyan">
+
+                        <i class="fa-solid fa-gauge-high"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Hit Rate
+                        </span>
+
+                        <strong id="adminCacheHitRate">
+                            0%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-stat-card">
+
+                    <div class="admin-stat-icon red">
+
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Evictions
+                        </span>
+
+                        <strong id="adminCacheEvictions">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- USER MANAGEMENT -->
+
+            <h3 class="admin-section-title">
+
+                <i class="fa-solid fa-user-gear"></i>
+
+                User Management
+
+            </h3>
+
+
+            <div class="admin-users-table-container">
+
+                <div class="table-container">
+
+                    <table id="adminUsersTable">
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                ID
+                            </th>
+
+                            <th>
+                                Username
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Role
+                            </th>
+
+                            <th>
+                                Verified
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+
+                        <tbody id="adminUsersTableBody">
+
+                        <tr>
+
+                            <td colspan="6">
+                                Loading users...
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ADMIN AUTH TEST -->
+
+            <div class="admin-test-box">
+
+                <div>
+
+                    <h3>
+                        Authorization Test
+                    </h3>
+
+                    <p>
+                        Verify that your administrator
+                        permissions are working correctly.
+                    </p>
+
+                </div>
+
+
+                <button
+                        onclick="testAdminAccess()"
+                        class="action-button purple-button">
+
+                    <i class="fa-solid fa-shield-check"></i>
+
+                    Test Admin Authorization
+
+                </button>
+
+
+                <p id="adminTestResult"></p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================================= -->
+        <!-- FOOTER                                           -->
+        <!-- ================================================= -->
+
+        <footer class="dashboard-footer">
+
+
+            <div class="footer-brand">
+
+                <div class="footer-logo">
+
+                    <i class="fa-solid fa-database"></i>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        MiniCache
+                    </strong>
+
+                    <span>
+                        High-Performance In-Memory Cache
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="footer-info">
+
+                <span>
+                    Secure
+                </span>
+
+                <span>
+                    •
+                </span>
+
+                <span>
+                    Fast
+                </span>
+
+                <span>
+                    •
+                </span>
+
+                <span>
+                    Reliable
+                </span>
+
+                <span>
+                    •
+                </span>
+
+                <span>
+                    © 2026
+                </span>
+
+            </div>
+
+        </footer>
+
+
+    </main>
+
 </div>
+
+
+
+<!-- ===================================================== -->
+<!-- EXISTING JAVASCRIPT                                   -->
+<!-- ===================================================== -->
+
 <script src="script.js"></script>
+
+
+<!-- ===================================================== -->
+<!-- DASHBOARD UI INITIALIZATION                           -->
+<!-- ===================================================== -->
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const username =
+                localStorage.getItem(
+                    "minicacheUsername"
+                ) || "User";
+
+
+            const role =
+                localStorage.getItem(
+                    "minicacheRole"
+                ) || "USER";
+
+
+            const dashboardUsername =
+                document.getElementById(
+                    "dashboardUsername"
+                );
+
+
+            const sidebarUsername =
+                document.getElementById(
+                    "sidebarUsername"
+                );
+
+
+            const sidebarRole =
+                document.getElementById(
+                    "sidebarRole"
+                );
+
+
+            const userRole =
+                document.getElementById(
+                    "userRole"
+                );
+
+
+            if (dashboardUsername) {
+
+                dashboardUsername.textContent =
+                    username;
+
+            }
+
+
+            if (sidebarUsername) {
+
+                sidebarUsername.textContent =
+                    username;
+
+            }
+
+
+            if (sidebarRole) {
+
+                sidebarRole.textContent =
+                    role;
+
+            }
+
+
+            if (userRole) {
+
+                userRole.textContent =
+                    role;
+
+            }
+
+
+            /*
+             * Show Admin navigation only
+             * for administrators.
+             */
+
+            const adminNavItem =
+                document.getElementById(
+                    "adminNavItem"
+                );
+
+
+            const adminPanel =
+                document.getElementById(
+                    "adminPanel"
+                );
+
+
+            if (role === "ADMIN") {
+
+                if (adminNavItem) {
+
+                    adminNavItem.style.display =
+                        "flex";
+
+                }
+
+            }
+
+
+            /*
+             * Persistence status
+             */
+
+            if (
+                typeof showPersistenceStatus ===
+                "function"
+            ) {
+
+                showPersistenceStatus();
+
+            }
+
+        }
+
+    );
+
+</script>
+
 
 </body>
 

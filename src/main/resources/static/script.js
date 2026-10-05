@@ -1,8 +1,3 @@
-(function () {
-    emailjs.init({
-        publicKey: "h2Lav4SdA_A_tQL7f"
-    });
-})();
 const API_URL = "https://minicache-api.onrender.com";
 
 
@@ -10,20 +5,10 @@ const API_URL = "https://minicache-api.onrender.com";
 // AUTHENTICATION
 // ======================================================
 
-function getAuthHeaders() {
-
-    const token = localStorage.getItem("minicacheToken");
-
-    return {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-    };
+function getToken() {
+    return localStorage.getItem("minicacheToken");
 }
 
-
-// ======================================================
-// REFRESH ACCESS TOKEN
-// ======================================================
 
 async function refreshAccessToken() {
 
@@ -31,36 +16,33 @@ async function refreshAccessToken() {
         localStorage.getItem("minicacheRefreshToken");
 
     if (!refreshToken) {
-        console.log("No refresh token available.");
         return false;
     }
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/auth/refresh`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    refreshToken: refreshToken
-                })
-            }
-        );
+        const response =
+            await fetch(
+                `${API_URL}/auth/refresh`,
+                {
+                    method: "POST",
 
-        if (!response.ok) {
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-            console.error(
-                "Refresh request failed:",
-                response.status
+                    body: JSON.stringify({
+                        refreshToken: refreshToken
+                    })
+                }
             );
 
+        if (!response.ok) {
             return false;
         }
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
         if (data.success && data.token) {
 
@@ -77,10 +59,6 @@ async function refreshAccessToken() {
                 );
             }
 
-            console.log(
-                "Access token refreshed successfully."
-            );
-
             return true;
         }
 
@@ -89,7 +67,7 @@ async function refreshAccessToken() {
     } catch (error) {
 
         console.error(
-            "Token refresh failed:",
+            "Token refresh error:",
             error
         );
 
@@ -99,35 +77,22 @@ async function refreshAccessToken() {
 
 
 // ======================================================
-// LOGOUT / SESSION EXPIRED
+// SESSION EXPIRED
 // ======================================================
 
-function showLoginPage(messageText = "") {
+function showLoginPage(message = "") {
 
     localStorage.removeItem("minicacheToken");
     localStorage.removeItem("minicacheRefreshToken");
     localStorage.removeItem("minicacheUsername");
+    localStorage.removeItem("minicacheRole");
 
-    const dashboard =
-        document.getElementById("dashboardSection");
+    console.log(
+        "Session expired. Redirecting to login."
+    );
 
-    const loginSection =
-        document.getElementById("loginSection");
-
-    const message =
-        document.getElementById("loginMessage");
-
-    if (dashboard) {
-        dashboard.style.display = "none";
-    }
-
-    if (loginSection) {
-        loginSection.style.display = "block";
-    }
-
-    if (message) {
-        message.textContent = messageText;
-    }
+    window.location.href =
+        "login.html";
 }
 
 
@@ -142,7 +107,7 @@ async function authenticatedFetch(
 ) {
 
     const token =
-        localStorage.getItem("minicacheToken");
+        getToken();
 
     options.headers = {
         "Content-Type": "application/json",
@@ -155,11 +120,47 @@ async function authenticatedFetch(
             "Bearer " + token;
     }
 
-    let response;
-
     try {
 
-        response = await fetch(url, options);
+        const response =
+            await fetch(
+                url,
+                options
+            );
+
+
+        if (
+            (response.status === 401 ||
+                response.status === 403) &&
+            retry
+        ) {
+
+            const refreshed =
+                await refreshAccessToken();
+
+            if (refreshed) {
+
+                const newToken =
+                    getToken();
+
+                options.headers["Authorization"] =
+                    "Bearer " + newToken;
+
+                return authenticatedFetch(
+                    url,
+                    options,
+                    false
+                );
+            }
+
+            showLoginPage(
+                "Session expired. Please login again."
+            );
+
+            return response;
+        }
+
+        return response;
 
     } catch (error) {
 
@@ -170,58 +171,6 @@ async function authenticatedFetch(
 
         throw error;
     }
-
-
-    // --------------------------------------------------
-    // TOKEN EXPIRED
-    // --------------------------------------------------
-
-    if (
-        (response.status === 401 ||
-            response.status === 403) &&
-        retry
-    ) {
-
-        console.log(
-            "Access token expired/invalid. Refreshing..."
-        );
-
-        const refreshed =
-            await refreshAccessToken();
-
-        if (refreshed) {
-
-            console.log(
-                "Retrying original request..."
-            );
-
-            const newToken =
-                localStorage.getItem("minicacheToken");
-
-            options.headers = {
-                "Content-Type": "application/json",
-                ...(options.headers || {}),
-                "Authorization":
-                    "Bearer " + newToken
-            };
-
-            return authenticatedFetch(
-                url,
-                options,
-                false
-            );
-        }
-
-        console.log(
-            "Refresh token failed. Login required."
-        );
-
-        showLoginPage(
-            "Session expired. Please login again."
-        );
-    }
-
-    return response;
 }
 
 
@@ -239,95 +188,54 @@ function addActivity(
 ) {
 
     const activityTable =
-        document.getElementById("cacheActivity");
+        document.getElementById(
+            "cacheActivity"
+        );
 
     if (!activityTable) {
         return;
     }
 
-    const time =
-        new Date().toLocaleTimeString();
-
     activityLog.unshift({
-        time: time,
-        operation: operation,
-        key: key,
-        status: status
+        time:
+            new Date().toLocaleTimeString(),
+
+        operation:
+        operation,
+
+        key:
+        key,
+
+        status:
+        status
     });
 
+
     if (activityLog.length > 20) {
+
         activityLog.pop();
     }
 
+
     activityTable.innerHTML = "";
 
-    activityLog.forEach(activity => {
 
-        const row =
-            document.createElement("tr");
+    activityLog.forEach(
+        activity => {
 
-        row.innerHTML = `
-            <td>${activity.time}</td>
-            <td>${activity.operation}</td>
-            <td>${activity.key}</td>
-            <td>${activity.status}</td>
-        `;
+            const row =
+                document.createElement("tr");
 
-        activityTable.appendChild(row);
-    });
-}
+            row.innerHTML = `
+                <td>${activity.time}</td>
+                <td>${activity.operation}</td>
+                <td>${activity.key}</td>
+                <td>${activity.status}</td>
+            `;
 
-
-// ======================================================
-// BACKEND STATUS
-// ======================================================
-
-async function checkBackendStatus() {
-
-    const statusElement =
-        document.getElementById("backendStatus");
-
-    if (!statusElement) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await authenticatedFetch(
-                `${API_URL}/cache/stats`
-            );
-
-        if (response.ok) {
-
-            statusElement.textContent =
-                "🟢 Online";
-
-            statusElement.style.color =
-                "green";
-
-        } else {
-
-            statusElement.textContent =
-                "🔴 Offline";
-
-            statusElement.style.color =
-                "red";
+            activityTable.appendChild(row);
         }
-
-    } catch (error) {
-
-        statusElement.textContent =
-            "🔴 Offline";
-
-        statusElement.style.color =
-            "red";
-
-        console.error(
-            "Backend status check failed:",
-            error
-        );
-    }
+    );
 }
 
 
@@ -337,14 +245,32 @@ async function checkBackendStatus() {
 
 async function setCache() {
 
+    const keyElement =
+        document.getElementById("key");
+
+    const valueElement =
+        document.getElementById("value");
+
+    const ttlElement =
+        document.getElementById("ttl");
+
+
+    if (!keyElement || !valueElement) {
+        return;
+    }
+
+
     const key =
-        document.getElementById("key").value.trim();
+        keyElement.value.trim();
 
     const value =
-        document.getElementById("value").value;
+        valueElement.value;
 
     const ttl =
-        document.getElementById("ttl").value;
+        ttlElement
+            ? ttlElement.value
+            : "";
+
 
     if (!key || !value) {
 
@@ -355,15 +281,18 @@ async function setCache() {
         return;
     }
 
+
     const data = {
         value: value
     };
+
 
     if (ttl) {
 
         data.ttl =
             Number(ttl);
     }
+
 
     try {
 
@@ -372,12 +301,16 @@ async function setCache() {
                 `${API_URL}/cache/key/${encodeURIComponent(key)}`,
                 {
                     method: "POST",
-                    body: JSON.stringify(data)
+
+                    body:
+                        JSON.stringify(data)
                 }
             );
 
+
         const result =
             await response.text();
+
 
         if (response.ok) {
 
@@ -402,6 +335,7 @@ async function setCache() {
             );
         }
 
+
         await loadStatistics();
         await loadEntries();
         await loadLRUOrder();
@@ -412,7 +346,10 @@ async function setCache() {
             "Unable to connect to backend."
         );
 
-        console.error(error);
+        console.error(
+            "SET error:",
+            error
+        );
     }
 }
 
@@ -423,11 +360,25 @@ async function setCache() {
 
 async function getCache() {
 
-    const key =
-        document.getElementById("getKey").value.trim();
+    const keyElement =
+        document.getElementById(
+            "getKey"
+        );
 
     const resultElement =
-        document.getElementById("getResult");
+        document.getElementById(
+            "getResult"
+        );
+
+
+    if (!keyElement || !resultElement) {
+        return;
+    }
+
+
+    const key =
+        keyElement.value.trim();
+
 
     if (!key) {
 
@@ -437,12 +388,14 @@ async function getCache() {
         return;
     }
 
+
     try {
 
         const response =
             await authenticatedFetch(
                 `${API_URL}/cache/key/${encodeURIComponent(key)}`
             );
+
 
         if (response.ok) {
 
@@ -470,6 +423,7 @@ async function getCache() {
             );
         }
 
+
         await loadStatistics();
 
     } catch (error) {
@@ -477,7 +431,10 @@ async function getCache() {
         resultElement.textContent =
             "Unable to connect to backend.";
 
-        console.error(error);
+        console.error(
+            "GET error:",
+            error
+        );
     }
 }
 
@@ -488,11 +445,25 @@ async function getCache() {
 
 async function deleteCache() {
 
-    const key =
-        document.getElementById("deleteKey").value.trim();
+    const keyElement =
+        document.getElementById(
+            "deleteKey"
+        );
 
     const resultElement =
-        document.getElementById("deleteResult");
+        document.getElementById(
+            "deleteResult"
+        );
+
+
+    if (!keyElement || !resultElement) {
+        return;
+    }
+
+
+    const key =
+        keyElement.value.trim();
+
 
     if (!key) {
 
@@ -501,6 +472,7 @@ async function deleteCache() {
 
         return;
     }
+
 
     try {
 
@@ -512,11 +484,14 @@ async function deleteCache() {
                 }
             );
 
+
         const result =
             await response.text();
 
+
         resultElement.textContent =
             result;
+
 
         addActivity(
             "DELETE",
@@ -525,6 +500,7 @@ async function deleteCache() {
                 ? "Success"
                 : "Not Found"
         );
+
 
         await loadStatistics();
         await loadEntries();
@@ -535,19 +511,30 @@ async function deleteCache() {
         resultElement.textContent =
             "Unable to connect to backend.";
 
-        console.error(error);
+        console.error(
+            "DELETE error:",
+            error
+        );
     }
 }
 
 
 // ======================================================
-// CLEAR ENTIRE CACHE
+// CLEAR CACHE
 // ======================================================
 
 async function clearCache() {
 
     const resultElement =
-        document.getElementById("clearResult");
+        document.getElementById(
+            "clearResult"
+        );
+
+
+    if (!resultElement) {
+        return;
+    }
+
 
     try {
 
@@ -559,11 +546,23 @@ async function clearCache() {
                 }
             );
 
+
         const result =
             await response.text();
 
+
         resultElement.textContent =
             result;
+
+
+        addActivity(
+            "CLEAR",
+            "ALL",
+            response.ok
+                ? "Success"
+                : "Failed"
+        );
+
 
         await loadStatistics();
         await loadEntries();
@@ -574,7 +573,10 @@ async function clearCache() {
         resultElement.textContent =
             "Unable to connect to backend.";
 
-        console.error(error);
+        console.error(
+            "CLEAR error:",
+            error
+        );
     }
 }
 
@@ -592,84 +594,111 @@ async function loadStatistics() {
                 `${API_URL}/cache/stats`
             );
 
+
         if (!response.ok) {
             return;
         }
+
 
         const statistics =
             await response.json();
 
 
-        // Basic statistics
-
-        const cacheSize =
-            document.getElementById("cacheSize");
+        const size =
+            Number(statistics.size || 0);
 
         const capacity =
-            document.getElementById("capacity");
+            Number(statistics.capacity || 0);
 
         const hits =
-            document.getElementById("hits");
+            Number(statistics.hits || 0);
 
         const misses =
-            document.getElementById("misses");
-
-        const hitRate =
-            document.getElementById("hitRate");
+            Number(statistics.misses || 0);
 
         const evictions =
-            document.getElementById("evictions");
+            Number(statistics.evictions || 0);
+
+        const hitRate =
+            Number(statistics.hitRate || 0);
+
+
+        // BASIC STATISTICS
+
+        const cacheSize =
+            document.getElementById(
+                "cacheSize"
+            );
+
+        const capacityElement =
+            document.getElementById(
+                "capacity"
+            );
+
+        const hitsElement =
+            document.getElementById(
+                "hits"
+            );
+
+        const missesElement =
+            document.getElementById(
+                "misses"
+            );
+
+        const hitRateElement =
+            document.getElementById(
+                "hitRate"
+            );
+
+        const evictionsElement =
+            document.getElementById(
+                "evictions"
+            );
 
 
         if (cacheSize)
             cacheSize.textContent =
-                statistics.size;
+                size;
 
-        if (capacity)
-            capacity.textContent =
-                statistics.capacity;
+        if (capacityElement)
+            capacityElement.textContent =
+                capacity;
 
-        if (hits)
-            hits.textContent =
-                statistics.hits;
+        if (hitsElement)
+            hitsElement.textContent =
+                hits;
 
-        if (misses)
-            misses.textContent =
-                statistics.misses;
+        if (missesElement)
+            missesElement.textContent =
+                misses;
 
-        if (hitRate)
-            hitRate.textContent =
-                Number(statistics.hitRate || 0)
-                    .toFixed(2) + "%";
+        if (hitRateElement)
+            hitRateElement.textContent =
+                hitRate.toFixed(2) + "%";
 
-        if (evictions)
-            evictions.textContent =
-                statistics.evictions;
+        if (evictionsElement)
+            evictionsElement.textContent =
+                evictions;
 
 
-        // Performance
+        // PERFORMANCE
 
         const totalRequests =
-            statistics.hits +
-            statistics.misses;
+            hits + misses;
+
 
         const missRate =
             totalRequests === 0
                 ? 0
-                : (
-                    statistics.misses *
-                    100 /
-                    totalRequests
-                );
+                : (misses * 100) /
+                totalRequests;
+
 
         const cacheUsage =
-            statistics.capacity === 0
+            capacity === 0
                 ? 0
-                : (
-                    statistics.size *
-                    100 /
-                    statistics.capacity
-                );
+                : (size * 100) /
+                capacity;
 
 
         const totalRequestsElement =
@@ -704,8 +733,7 @@ async function loadStatistics() {
 
         if (performanceHitRate)
             performanceHitRate.textContent =
-                Number(statistics.hitRate || 0)
-                    .toFixed(2) + "%";
+                hitRate.toFixed(2) + "%";
 
         if (missRateElement)
             missRateElement.textContent =
@@ -717,15 +745,16 @@ async function loadStatistics() {
 
         if (performanceEvictions)
             performanceEvictions.textContent =
-                statistics.evictions;
+                evictions;
 
 
-        // Performance message
+        // PERFORMANCE MESSAGE
 
         const performanceMessage =
             document.getElementById(
                 "performanceMessage"
             );
+
 
         if (performanceMessage) {
 
@@ -734,16 +763,12 @@ async function loadStatistics() {
                 performanceMessage.textContent =
                     "Waiting for cache activity...";
 
-            } else if (
-                statistics.hitRate >= 80
-            ) {
+            } else if (hitRate >= 80) {
 
                 performanceMessage.textContent =
                     "Cache is serving requests efficiently.";
 
-            } else if (
-                statistics.hitRate >= 50
-            ) {
+            } else if (hitRate >= 50) {
 
                 performanceMessage.textContent =
                     "Cache performance is moderate.";
@@ -756,12 +781,13 @@ async function loadStatistics() {
         }
 
 
-        // Cache health
+        // CACHE HEALTH
 
         const healthElement =
             document.getElementById(
                 "cacheHealth"
             );
+
 
         if (healthElement) {
 
@@ -770,16 +796,12 @@ async function loadStatistics() {
                 healthElement.textContent =
                     "⚪ No Activity";
 
-            } else if (
-                statistics.hitRate >= 80
-            ) {
+            } else if (hitRate >= 80) {
 
                 healthElement.textContent =
                     "🟢 Healthy";
 
-            } else if (
-                statistics.hitRate >= 50
-            ) {
+            } else if (hitRate >= 50) {
 
                 healthElement.textContent =
                     "🟡 Moderate";
@@ -792,12 +814,13 @@ async function loadStatistics() {
         }
 
 
-        // Last updated
+        // LAST UPDATED
 
         const lastUpdated =
             document.getElementById(
                 "lastUpdated"
             );
+
 
         if (lastUpdated) {
 
@@ -807,17 +830,18 @@ async function loadStatistics() {
         }
 
 
-        // Chart
+        // CHART
 
         updateMetricsChart(
-            Number(statistics.hitRate || 0),
+            hitRate,
             cacheUsage
         );
+
 
     } catch (error) {
 
         console.error(
-            "Unable to load statistics:",
+            "Statistics error:",
             error
         );
     }
@@ -837,41 +861,70 @@ async function loadEntries() {
                 `${API_URL}/cache/entries`
             );
 
+
         if (!response.ok) {
             return;
         }
 
+
         const entries =
             await response.json();
+
 
         const tableBody =
             document.getElementById(
                 "cacheEntries"
             );
 
+
         if (!tableBody) {
             return;
         }
 
+
         tableBody.innerHTML = "";
 
-        for (const key in entries) {
 
-            const row =
-                document.createElement("tr");
+        const keys =
+            Object.keys(entries);
 
-            row.innerHTML = `
-                <td>${key}</td>
-                <td>${entries[key]}</td>
+
+        if (keys.length === 0) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="2">
+                        No cache entries
+                    </td>
+                </tr>
             `;
 
-            tableBody.appendChild(row);
+            return;
         }
+
+
+        keys.forEach(
+            key => {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+                row.innerHTML = `
+                    <td>${key}</td>
+                    <td>${entries[key]}</td>
+                `;
+
+                tableBody.appendChild(row);
+            }
+        );
+
 
     } catch (error) {
 
         console.error(
-            "Unable to load cache entries:",
+            "Cache entries error:",
             error
         );
     }
@@ -891,43 +944,392 @@ async function loadActivity() {
                 `${API_URL}/cache/activity`
             );
 
+
         if (!response.ok) {
             return;
         }
 
+
         const activities =
             await response.json();
+
 
         const tableBody =
             document.getElementById(
                 "cacheActivity"
             );
 
+
         if (!tableBody) {
             return;
         }
 
+
         tableBody.innerHTML = "";
 
-        activities.forEach(activity => {
 
-            const row =
-                document.createElement("tr");
+        if (
+            !Array.isArray(activities) ||
+            activities.length === 0
+        ) {
 
-            row.innerHTML = `
-                <td>${activity.time}</td>
-                <td>${activity.operation}</td>
-                <td>${activity.key}</td>
-                <td>${activity.status}</td>
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        No activity yet
+                    </td>
+                </tr>
             `;
 
-            tableBody.appendChild(row);
-        });
+            return;
+        }
+
+
+        activities.forEach(
+            activity => {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+                row.innerHTML = `
+                    <td>${activity.time || "-"}</td>
+                    <td>${activity.operation || "-"}</td>
+                    <td>${activity.key || "-"}</td>
+                    <td>${activity.status || "-"}</td>
+                `;
+
+                tableBody.appendChild(row);
+            }
+        );
+
 
     } catch (error) {
 
         console.error(
-            "Unable to load cache activity:",
+            "Activity loading error:",
+            error
+        );
+    }
+}
+
+
+// ======================================================
+// LRU ORDER
+// ======================================================
+
+async function loadLRUOrder() {
+
+    const lruElement =
+        document.getElementById(
+            "lruOrder"
+        );
+
+
+    if (!lruElement) {
+        return;
+    }
+
+
+    try {
+
+        lruElement.textContent =
+            "Loading LRU order...";
+
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/lru`
+            );
+
+
+        console.log(
+            "LRU API status:",
+            response.status
+        );
+
+
+        if (!response.ok) {
+
+            const errorText =
+                await response.text();
+
+            console.error(
+                "LRU API error:",
+                response.status,
+                errorText
+            );
+
+
+            lruElement.textContent =
+                `Unable to load LRU order (${response.status})`;
+
+            return;
+        }
+
+
+        const lruKeys =
+            await response.json();
+
+
+        console.log(
+            "LRU data:",
+            lruKeys
+        );
+
+
+        if (
+            !Array.isArray(lruKeys) ||
+            lruKeys.length === 0
+        ) {
+
+            lruElement.innerHTML = `
+                <div class="lru-empty">
+
+                    <i class="fa-solid fa-box-open"></i>
+
+                    <span>
+                        Cache is empty.
+                    </span>
+
+                </div>
+            `;
+
+            return;
+        }
+
+
+        lruElement.innerHTML =
+            lruKeys
+                .map(
+                    (key, index) => {
+
+                        const label =
+                            index === 0
+                                ? "MRU"
+                                : index ===
+                                lruKeys.length - 1
+                                    ? "LRU"
+                                    : "";
+
+
+                        return `
+                            <div class="lru-item">
+
+                                <span>
+                                    ${label}
+                                </span>
+
+                                <strong>
+                                    ${key}
+                                </strong>
+
+                            </div>
+                        `;
+                    }
+                )
+                .join("");
+
+
+    } catch (error) {
+
+        console.error(
+            "LRU loading error:",
+            error
+        );
+
+
+        lruElement.textContent =
+            "Unable to load LRU order.";
+    }
+}
+
+
+// ======================================================
+// BACKEND STATUS
+// ======================================================
+
+async function checkBackendStatus() {
+
+    const statusElement =
+        document.getElementById(
+            "backendStatus"
+        );
+
+
+    if (!statusElement) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/stats`
+            );
+
+
+        if (response.ok) {
+
+            statusElement.textContent =
+                "🟢 Online";
+
+        } else {
+
+            statusElement.textContent =
+                "🔴 Offline";
+        }
+
+
+    } catch (error) {
+
+        statusElement.textContent =
+            "🔴 Offline";
+
+        console.error(
+            "Backend status error:",
+            error
+        );
+    }
+}
+
+
+// ======================================================
+// CACHE HEALTH
+// ======================================================
+
+async function checkCacheHealth() {
+
+    const healthElement =
+        document.getElementById(
+            "cacheHealth"
+        );
+
+
+    if (!healthElement) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/health`
+            );
+
+
+        if (!response.ok) {
+
+            healthElement.textContent =
+                "🔴 Down";
+
+            return;
+        }
+
+
+        const data =
+            await response.text();
+
+
+        if (data.trim() === "UP") {
+
+            healthElement.textContent =
+                "🟢 Healthy";
+
+        } else {
+
+            healthElement.textContent =
+                "🔴 Down";
+        }
+
+
+    } catch (error) {
+
+        healthElement.textContent =
+            "🔴 Backend Offline";
+    }
+}
+
+
+// ======================================================
+// BULK CACHE
+// ======================================================
+
+async function bulkSetCache() {
+
+    const inputElement =
+        document.getElementById(
+            "bulkEntries"
+        );
+
+    const resultElement =
+        document.getElementById(
+            "bulkResult"
+        );
+
+
+    if (!inputElement || !resultElement) {
+        return;
+    }
+
+
+    const input =
+        inputElement.value;
+
+
+    if (!input.trim()) {
+
+        resultElement.textContent =
+            "Please enter cache entries.";
+
+        return;
+    }
+
+
+    try {
+
+        const entries =
+            JSON.parse(input);
+
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/bulk`,
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify(entries)
+                }
+            );
+
+
+        const result =
+            await response.text();
+
+
+        resultElement.textContent =
+            response.ok
+                ? result
+                : "Bulk operation failed: " +
+                result;
+
+
+        await loadStatistics();
+        await loadEntries();
+        await loadLRUOrder();
+
+
+    } catch (error) {
+
+        resultElement.textContent =
+            "Invalid JSON format.";
+
+        console.error(
+            "Bulk operation error:",
             error
         );
     }
@@ -945,12 +1347,15 @@ async function runLRUDemo() {
             "lruDemoResult"
         );
 
+
     if (!resultElement) {
         return;
     }
 
+
     resultElement.textContent =
         "Running LRU demonstration...";
+
 
     try {
 
@@ -964,14 +1369,16 @@ async function runLRUDemo() {
                 }
             );
 
+
         if (!clearResponse.ok) {
+
             throw new Error(
                 "Unable to clear cache."
             );
         }
 
 
-        // Add 100 entries
+        // Fill cache
 
         for (
             let i = 1;
@@ -979,16 +1386,27 @@ async function runLRUDemo() {
             i++
         ) {
 
-            await authenticatedFetch(
-                `${API_URL}/cache/key/demo-${i}`,
-                {
-                    method: "POST",
-                    body: JSON.stringify({
-                        value:
-                            `Demo Value ${i}`
-                    })
-                }
-            );
+            const response =
+                await authenticatedFetch(
+                    `${API_URL}/cache/key/demo-${i}`,
+                    {
+                        method: "POST",
+
+                        body:
+                            JSON.stringify({
+                                value:
+                                    `Demo Value ${i}`
+                            })
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Failed to add demo-${i}`
+                );
+            }
         }
 
 
@@ -1005,32 +1423,36 @@ async function runLRUDemo() {
             `${API_URL}/cache/key/demo-101`,
             {
                 method: "POST",
-                body: JSON.stringify({
-                    value:
-                        "Demo Value 101"
-                })
+
+                body:
+                    JSON.stringify({
+                        value:
+                            "Demo Value 101"
+                    })
             }
         );
 
-
-        // Get statistics
 
         const response =
             await authenticatedFetch(
                 `${API_URL}/cache/stats`
             );
 
+
         const statistics =
             await response.json();
+
 
         resultElement.textContent =
             `LRU Demo completed! ` +
             `Cache Size: ${statistics.size}, ` +
             `Evictions: ${statistics.evictions}`;
 
+
         await loadEntries();
         await loadLRUOrder();
         await loadStatistics();
+
 
     } catch (error) {
 
@@ -1061,9 +1483,11 @@ async function runTTLDemo() {
             "ttlDemoResult"
         );
 
+
     if (!ttlInput || !resultElement) {
         return;
     }
+
 
     const ttl =
         Number(ttlInput.value);
@@ -1079,7 +1503,8 @@ async function runTTLDemo() {
 
 
     const demoKey =
-        "ttl-demo-" + Date.now();
+        "ttl-demo-" +
+        Date.now();
 
 
     try {
@@ -1088,18 +1513,20 @@ async function runTTLDemo() {
             `Creating cache entry with TTL of ${ttl} ms...`;
 
 
-        // Create entry
-
         const setResponse =
             await authenticatedFetch(
                 `${API_URL}/cache/key/${encodeURIComponent(demoKey)}`,
                 {
                     method: "POST",
-                    body: JSON.stringify({
-                        value:
-                            "TTL Demo Value",
-                        ttl: ttl
-                    })
+
+                    body:
+                        JSON.stringify({
+                            value:
+                                "TTL Demo Value",
+
+                            ttl:
+                            ttl
+                        })
                 }
             );
 
@@ -1111,8 +1538,6 @@ async function runTTLDemo() {
             );
         }
 
-
-        // Verify entry
 
         const beforeResponse =
             await authenticatedFetch(
@@ -1134,8 +1559,6 @@ async function runTTLDemo() {
             `Waiting ${ttl / 1000} seconds for expiration...`;
 
 
-        // Wait
-
         await new Promise(
             resolve =>
                 setTimeout(
@@ -1144,8 +1567,6 @@ async function runTTLDemo() {
                 )
         );
 
-
-        // Check again
 
         const afterResponse =
             await authenticatedFetch(
@@ -1169,6 +1590,7 @@ async function runTTLDemo() {
         await loadStatistics();
         await loadEntries();
 
+
     } catch (error) {
 
         resultElement.textContent =
@@ -1176,374 +1598,6 @@ async function runTTLDemo() {
 
         console.error(
             "TTL Demo Error:",
-            error
-        );
-    }
-}
-
-
-// ======================================================
-// CHART
-// ======================================================
-
-const metricsLabels = [];
-const hitRateData = [];
-const cacheUsageData = [];
-
-let metricsChart = null;
-
-
-function initializeMetricsChart() {
-
-    const canvas =
-        document.getElementById(
-            "metricsChart"
-        );
-
-    if (!canvas) {
-        console.log(
-            "metricsChart canvas not found."
-        );
-        return;
-    }
-
-    if (
-        typeof Chart ===
-        "undefined"
-    ) {
-
-        console.error(
-            "Chart.js is not loaded."
-        );
-
-        return;
-    }
-
-    metricsChart =
-        new Chart(
-            canvas,
-            {
-                type: "line",
-
-                data: {
-
-                    labels:
-                    metricsLabels,
-
-                    datasets: [
-
-                        {
-                            label:
-                                "Hit Rate (%)",
-
-                            data:
-                            hitRateData,
-
-                            tension:
-                                0.3
-                        },
-
-                        {
-                            label:
-                                "Cache Usage (%)",
-
-                            data:
-                            cacheUsageData,
-
-                            tension:
-                                0.3
-                        }
-                    ]
-                },
-
-                options: {
-
-                    responsive:
-                        true,
-
-                    scales: {
-
-                        y: {
-
-                            beginAtZero:
-                                true,
-
-                            max:
-                                100
-                        }
-                    }
-                }
-            }
-        );
-}
-
-
-function updateMetricsChart(
-    hitRate,
-    cacheUsage
-) {
-
-    if (!metricsChart) {
-        return;
-    }
-
-    const now =
-        new Date()
-            .toLocaleTimeString();
-
-    metricsLabels.push(now);
-
-    hitRateData.push(hitRate);
-
-    cacheUsageData.push(
-        Number(
-            cacheUsage.toFixed(2)
-        )
-    );
-
-
-    if (
-        metricsLabels.length >
-        10
-    ) {
-
-        metricsLabels.shift();
-
-        hitRateData.shift();
-
-        cacheUsageData.shift();
-    }
-
-
-    metricsChart.update();
-}
-
-
-// ======================================================
-// CLEAR ACTIVITY
-// ======================================================
-
-async function clearActivity() {
-
-    const activityTable =
-        document.getElementById(
-            "cacheActivity"
-        );
-
-    if (!activityTable) {
-        return;
-    }
-
-    activityTable.innerHTML = `
-        <tr>
-            <td colspan="4">
-                No activity yet
-            </td>
-        </tr>
-    `;
-
-    activityLog = [];
-}
-
-
-// ======================================================
-// LRU ORDER
-// ======================================================
-
-async function loadLRUOrder() {
-
-    const lruElement =
-        document.getElementById(
-            "lruOrder"
-        );
-
-    if (!lruElement) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await authenticatedFetch(
-                `${API_URL}/cache/lru`
-            );
-
-        if (!response.ok) {
-            return;
-        }
-
-        const lruKeys =
-            await response.json();
-
-
-        if (
-            !Array.isArray(lruKeys) ||
-            lruKeys.length === 0
-        ) {
-
-            lruElement.textContent =
-                "Cache is empty.";
-
-            return;
-        }
-
-
-        lruElement.innerHTML =
-            lruKeys
-                .map(
-                    (key, index) => {
-
-                        const label =
-                            index === 0
-                                ? "🟢 MRU"
-                                : index ===
-                                lruKeys.length - 1
-                                    ? "🔴 LRU"
-                                    : "";
-
-                        return `
-                            <div class="lru-item">
-                                <span>${label}</span>
-                                <strong>${key}</strong>
-                            </div>
-                        `;
-                    }
-                )
-                .join("");
-
-    } catch (error) {
-
-        console.error(
-            "Unable to load LRU order:",
-            error
-        );
-
-        lruElement.textContent =
-            "Unable to load LRU order.";
-    }
-}
-
-
-// ======================================================
-// CACHE HEALTH
-// ======================================================
-
-async function checkCacheHealth() {
-
-    const healthElement =
-        document.getElementById(
-            "cacheHealth"
-        );
-
-    if (!healthElement) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await authenticatedFetch(
-                `${API_URL}/cache/health`
-            );
-
-        if (!response.ok) {
-
-            healthElement.textContent =
-                "🔴 Down";
-
-            return;
-        }
-
-        const data =
-            await response.text();
-
-        if (data === "UP") {
-
-            healthElement.textContent =
-                "🟢 Healthy";
-
-        } else {
-
-            healthElement.textContent =
-                "🔴 Down";
-        }
-
-    } catch (error) {
-
-        healthElement.textContent =
-            "🔴 Backend Offline";
-    }
-}
-
-
-// ======================================================
-// BULK CACHE
-// ======================================================
-
-async function bulkSetCache() {
-
-    const input =
-        document.getElementById(
-            "bulkEntries"
-        ).value;
-
-    const resultElement =
-        document.getElementById(
-            "bulkResult"
-        );
-
-    if (!input.trim()) {
-
-        resultElement.textContent =
-            "Please enter cache entries.";
-
-        return;
-    }
-
-    try {
-
-        const entries =
-            JSON.parse(input);
-
-
-        const response =
-            await authenticatedFetch(
-                `${API_URL}/cache/bulk`,
-                {
-                    method: "POST",
-                    body: JSON.stringify(entries)
-                }
-            );
-
-
-        const result =
-            await response.text();
-
-
-        if (response.ok) {
-
-            resultElement.textContent =
-                result;
-
-        } else {
-
-            resultElement.textContent =
-                "Bulk operation failed: " +
-                result;
-        }
-
-
-        await loadStatistics();
-        await loadEntries();
-        await loadLRUOrder();
-
-    } catch (error) {
-
-        resultElement.textContent =
-            "Invalid JSON format.";
-
-        console.error(
-            "Bulk operation error:",
             error
         );
     }
@@ -1565,6 +1619,12 @@ async function runConcurrencyBenchmark() {
         document.getElementById(
             "benchmarkResult"
         );
+
+
+    if (!requestsInput || !resultElement) {
+        return;
+    }
+
 
     const requests =
         requestsInput.value.trim();
@@ -1629,13 +1689,14 @@ async function runConcurrencyBenchmark() {
             </div>
         `;
 
+
     } catch (error) {
 
         resultElement.textContent =
             "Unable to connect to backend.";
 
         console.error(
-            "Concurrency benchmark error:",
+            "Benchmark error:",
             error
         );
     }
@@ -1643,239 +1704,273 @@ async function runConcurrencyBenchmark() {
 
 
 // ======================================================
-// LOGIN
+// CLEAR ACTIVITY
 // ======================================================
 
-async function login() {
+function clearActivity() {
 
-    const usernameElement =
+    const activityTable =
         document.getElementById(
-            "username"
-        );
-
-    const passwordElement =
-        document.getElementById(
-            "password"
-        );
-
-    const message =
-        document.getElementById(
-            "loginMessage"
+            "cacheActivity"
         );
 
 
-    const username =
-        usernameElement.value.trim();
-
-    const password =
-        passwordElement.value;
+    if (!activityTable) {
+        return;
+    }
 
 
-    if (!username || !password) {
+    activityTable.innerHTML = `
+        <tr>
+            <td colspan="4">
+                No activity yet
+            </td>
+        </tr>
+    `;
 
-        message.textContent =
-            "Please enter username and password.";
+
+    activityLog = [];
+}
+
+
+// ======================================================
+// CHART
+// ======================================================
+
+const metricsLabels = [];
+const hitRateData = [];
+const cacheUsageData = [];
+
+let metricsChart = null;
+
+
+function initializeMetricsChart() {
+
+    const canvas =
+        document.getElementById(
+            "metricsChart"
+        );
+
+
+    if (!canvas) {
+        return;
+    }
+
+
+    if (typeof Chart === "undefined") {
+
+        console.error(
+            "Chart.js is not loaded."
+        );
 
         return;
     }
 
 
-    message.textContent =
-        "Signing in...";
+    if (metricsChart) {
+
+        try {
+            metricsChart.destroy();
+        } catch (error) {
+            console.error(error);
+        }
+
+        metricsChart = null;
+    }
+
+
+    metricsChart =
+        new Chart(
+            canvas,
+            {
+                type: "line",
+
+                data: {
+
+                    labels:
+                    metricsLabels,
+
+                    datasets: [
+
+                        {
+                            label:
+                                "Hit Rate (%)",
+
+                            data:
+                            hitRateData,
+
+                            tension:
+                                0.3
+                        },
+
+                        {
+                            label:
+                                "Cache Usage (%)",
+
+                            data:
+                            cacheUsageData,
+
+                            tension:
+                                0.3
+                        }
+
+                    ]
+                },
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero:
+                                true,
+
+                            max:
+                                100
+                        }
+                    }
+                }
+            }
+        );
+}
+
+
+function updateMetricsChart(
+    hitRate,
+    cacheUsage
+) {
+
+    if (!metricsChart) {
+        return;
+    }
+
+
+    metricsLabels.push(
+        new Date()
+            .toLocaleTimeString()
+    );
+
+
+    hitRateData.push(
+        hitRate
+    );
+
+
+    cacheUsageData.push(
+        Number(
+            cacheUsage.toFixed(2)
+        )
+    );
+
+
+    if (
+        metricsLabels.length >
+        10
+    ) {
+
+        metricsLabels.shift();
+        hitRateData.shift();
+        cacheUsageData.shift();
+    }
+
+
+    metricsChart.update(
+        "none"
+    );
+}
+
+
+// ======================================================
+// PERSISTENCE
+// ======================================================
+
+async function showPersistenceStatus() {
+
+    const status =
+        document.getElementById(
+            "persistenceStatus"
+        );
+
+
+    if (!status) {
+        return;
+    }
+
+
+    const token =
+        getToken();
+
+
+    if (!token) {
+
+        status.textContent =
+            "Login required";
+
+        return;
+    }
 
 
     try {
 
         const response =
-            await fetch(
-                `${API_URL}/auth/login`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-                            username:
-                            username,
-
-                            password:
-                            password
-                        })
-                }
+            await authenticatedFetch(
+                `${API_URL}/cache/persistence/status`
             );
+
+
+        if (!response.ok) {
+
+            status.textContent =
+                "Unavailable";
+
+            return;
+        }
 
 
         const data =
             await response.json();
 
 
-        console.log(
-            "Login response:",
-            data
-        );
-
-
-        if (
-            response.ok &&
-            data.success &&
-            data.token
-        ) {
-
-            // ------------------------------------------
-            // SAVE ACCESS TOKEN
-            // ------------------------------------------
-
-            localStorage.setItem(
-                "minicacheToken",
-                data.token
-            );
-
-
-            // ------------------------------------------
-            // SAVE REFRESH TOKEN
-            // ------------------------------------------
-
-            if (data.refreshToken) {
-
-                localStorage.setItem(
-                    "minicacheRefreshToken",
-                    data.refreshToken
-                );
-            }
-
-
-            // ------------------------------------------
-            // SAVE USERNAME
-            // ------------------------------------------
-
-            localStorage.setItem(
-                "minicacheUsername",
-                data.username ||
-                username
-            );
-            // ------------------------------------------
-// SAVE USER ROLE
-// ------------------------------------------
-
-            localStorage.setItem(
-                "minicacheRole",
-                data.role || "USER"
-            );
-// ------------------------------------------
-// DISPLAY USER ROLE
-// ------------------------------------------
-
-            displayUserRole();
-// ------------------------------------------
-// SHOW ADMIN PANEL
-// ------------------------------------------
-
-            showAdminPanel();
-            showPersistenceStatus();
-            loadAdminStats();
-            loadAdminUsers();
-            // ------------------------------------------
-            // HIDE LOGIN
-            // ------------------------------------------
-
-            const loginSection =
-                document.getElementById(
-                    "loginSection"
-                );
-
-            const dashboardSection =
-                document.getElementById(
-                    "dashboardSection"
-                );
-
-
-            if (loginSection) {
-
-                loginSection.style.display =
-                    "none";
-            }
-
-
-            if (dashboardSection) {
-
-                dashboardSection.style.display =
-                    "block";
-            }
-
-
-            message.textContent = "";
-
-
-            // ------------------------------------------
-            // INITIALIZE CHART
-            // ------------------------------------------
-
-            initializeMetricsChart();
-
-
-            // ------------------------------------------
-            // LOAD DASHBOARD
-            // ------------------------------------------
-
-            await loadStatistics();
-
-            await loadEntries();
-
-            await loadActivity();
-
-            await loadLRUOrder();
-
-            await checkBackendStatus();
-
-            await checkCacheHealth();
-
-
-            console.log(
-                "Login successful. Dashboard loaded."
-            );
-
-
-        } else {
-
-            message.textContent =
-                data.message ||
-                "Login failed.";
-
-            console.error(
-                "Login failed:",
-                data
-            );
-        }
+        status.textContent =
+            data.enabled
+                ? "Enabled"
+                : "Disabled";
 
 
     } catch (error) {
 
         console.error(
-            "Login error:",
+            "Persistence status error:",
             error
         );
 
-        message.textContent =
-            "Unable to connect to backend.";
+        status.textContent =
+            "Unavailable";
     }
 }
 
+
 // ======================================================
-// GET USER ROLE FROM JWT
+// JWT ROLE
 // ======================================================
 
 function getUserRoleFromToken() {
 
     const token =
-        localStorage.getItem("minicacheToken");
+        getToken();
+
 
     if (!token) {
         return null;
     }
+
 
     try {
 
@@ -1889,12 +1984,15 @@ function getUserRoleFromToken() {
                 )
             );
 
-        return payload.role || null;
+
+        return payload.role ||
+            null;
+
 
     } catch (error) {
 
         console.error(
-            "Unable to read role from JWT:",
+            "JWT role error:",
             error
         );
 
@@ -1912,109 +2010,590 @@ function displayUserRole() {
     const role =
         getUserRoleFromToken();
 
-    const roleElement =
-        document.getElementById("userRole");
 
-    if (roleElement) {
+    if (role) {
 
-        roleElement.textContent =
-            role || "UNKNOWN";
+        localStorage.setItem(
+            "minicacheRole",
+            role
+        );
     }
 
-    console.log(
-        "Logged-in user role:",
-        role
-    );
+
+    const username =
+        localStorage.getItem(
+            "minicacheUsername"
+        ) || "User";
+
+
+    const finalRole =
+        role ||
+        localStorage.getItem(
+            "minicacheRole"
+        ) ||
+        "USER";
+
+
+    const dashboardUsername =
+        document.getElementById(
+            "dashboardUsername"
+        );
+
+    const sidebarUsername =
+        document.getElementById(
+            "sidebarUsername"
+        );
+
+    const sidebarRole =
+        document.getElementById(
+            "sidebarRole"
+        );
+
+    const userRole =
+        document.getElementById(
+            "userRole"
+        );
+
+
+    if (dashboardUsername) {
+
+        dashboardUsername.textContent =
+            username;
+    }
+
+
+    if (sidebarUsername) {
+
+        sidebarUsername.textContent =
+            username;
+    }
+
+
+    if (sidebarRole) {
+
+        sidebarRole.textContent =
+            finalRole;
+    }
+
+
+    if (userRole) {
+
+        userRole.textContent =
+            finalRole;
+    }
+
+
+    return finalRole;
 }
+
+
 // ======================================================
-// SHOW ADMIN PANEL BASED ON ROLE
+// ADMIN PANEL
 // ======================================================
 
 function showAdminPanel() {
 
     const role =
-        localStorage.getItem("minicacheRole");
+        localStorage.getItem(
+            "minicacheRole"
+        );
+
 
     const adminPanel =
-        document.getElementById("adminPanel");
+        document.getElementById(
+            "adminPanel"
+        );
 
-    if (!adminPanel) {
-        return;
-    }
+
+    const adminNavItem =
+        document.getElementById(
+            "adminNavItem"
+        );
+
 
     if (role === "ADMIN") {
 
-        adminPanel.style.display = "block";
+        if (adminPanel) {
+
+            adminPanel.style.display =
+                "block";
+        }
+
+
+        if (adminNavItem) {
+
+            adminNavItem.style.display =
+                "flex";
+        }
+
+
+        loadAdminStats();
+        loadAdminUsers();
+
 
     } else {
 
-        adminPanel.style.display = "none";
+        if (adminPanel) {
+
+            adminPanel.style.display =
+                "none";
+        }
+
+
+        if (adminNavItem) {
+
+            adminNavItem.style.display =
+                "none";
+        }
     }
-
-    console.log(
-        "Admin panel visibility. Role:",
-        role
-    );
 }
+
+
 // ======================================================
-// TEST ADMIN AUTHORIZATION
+// ADMIN STATISTICS
 // ======================================================
 
-async function testAdminAccess() {
+async function loadAdminStats() {
 
-    const token =
-        localStorage.getItem("minicacheToken");
+    const role =
+        localStorage.getItem(
+            "minicacheRole"
+        );
 
-    const result =
-        document.getElementById("adminTestResult");
 
-    if (!token) {
-
-        result.textContent =
-            "Please login first.";
-
+    if (role !== "ADMIN") {
         return;
     }
 
-    result.textContent =
-        "Checking admin authorization...";
 
     try {
 
         const response =
-            await fetch(
-                `${API_URL}/admin/test`,
-                {
-                    method: "GET",
+            await authenticatedFetch(
+                `${API_URL}/admin/stats`
+            );
 
-                    headers: {
-                        "Authorization":
-                            "Bearer " + token
+
+        if (!response.ok) {
+
+            console.error(
+                "Admin statistics failed:",
+                response.status
+            );
+
+            return;
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const fields = {
+
+            adminTotalUsers:
+            data.totalUsers,
+
+            adminTotalAdmins:
+            data.totalAdmins,
+
+            adminTotalNormalUsers:
+            data.totalNormalUsers,
+
+            adminVerifiedUsers:
+            data.verifiedUsers,
+
+            adminUnverifiedUsers:
+            data.unverifiedUsers,
+
+            adminCacheSize:
+            data.cacheSize,
+
+            adminCacheCapacity:
+            data.cacheCapacity,
+
+            adminCacheHits:
+            data.cacheHits,
+
+            adminCacheMisses:
+            data.cacheMisses,
+
+            adminCacheHitRate:
+                Number(
+                    data.cacheHitRate || 0
+                ).toFixed(2) + "%",
+
+            adminCacheEvictions:
+            data.cacheEvictions
+        };
+
+
+        Object.entries(fields)
+            .forEach(
+                ([id, value]) => {
+
+                    const element =
+                        document.getElementById(id);
+
+                    if (element) {
+
+                        element.textContent =
+                            value;
                     }
                 }
             );
 
+
+    } catch (error) {
+
+        console.error(
+            "Admin statistics error:",
+            error
+        );
+    }
+}
+
+
+// ======================================================
+// ADMIN USER LIST
+// ======================================================
+
+async function loadAdminUsers() {
+
+    const role =
+        localStorage.getItem(
+            "minicacheRole"
+        );
+
+
+    if (role !== "ADMIN") {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/admin/users`
+            );
+
+
+        if (!response.ok) {
+
+            console.error(
+                "Admin users failed:",
+                response.status
+            );
+
+            return;
+        }
+
+
+        const users =
+            await response.json();
+
+
+        const tableBody =
+            document.getElementById(
+                "adminUsersTableBody"
+            );
+
+
+        if (!tableBody) {
+            return;
+        }
+
+
+        tableBody.innerHTML = "";
+
+
+        users.forEach(
+            user => {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${user.id}
+                    </td>
+
+                    <td>
+                        ${user.username}
+                    </td>
+
+                    <td>
+                        ${user.email}
+                    </td>
+
+                    <td>
+
+                        <span class="role-badge ${String(user.role).toLowerCase()}">
+                            ${user.role}
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        ${
+                    user.emailVerified
+                        ? `
+                                    <span class="status-badge verified">
+                                        ✓ VERIFIED
+                                    </span>
+                                  `
+                        : `
+                                    <span class="status-badge unverified">
+                                        ✕ UNVERIFIED
+                                    </span>
+                                  `
+                }
+
+                    </td>
+
+                    <td>
+
+                        ${
+                    user.role === "USER"
+                        ? `
+                                    <button
+                                        onclick="changeUserRole(${user.id}, 'ADMIN')">
+                                        Make Admin
+                                    </button>
+                                  `
+                        : `
+                                    <button
+                                        onclick="changeUserRole(${user.id}, 'USER')">
+                                        Make User
+                                    </button>
+                                  `
+                }
+
+                        ${
+                    user.role === "USER"
+                        ? `
+                                    <button
+                                        onclick="deleteUser(${user.id})">
+                                        Delete
+                                    </button>
+                                  `
+                        : ""
+                }
+
+                    </td>
+                `;
+
+
+                tableBody.appendChild(
+                    row
+                );
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Admin users error:",
+            error
+        );
+    }
+}
+
+
+// ======================================================
+// CHANGE USER ROLE
+// ======================================================
+
+async function changeUserRole(
+    userId,
+    newRole
+) {
+
+    const confirmed =
+        confirm(
+            `Change this user's role to ${newRole}?`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/admin/users/${userId}/role?role=${newRole}`,
+                {
+                    method: "PUT"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (response.ok) {
+
+            alert(
+                data.message ||
+                "Role updated successfully."
+            );
+
+
+            await loadAdminUsers();
+            await loadAdminStats();
+
+
+        } else {
+
+            alert(
+                data.message ||
+                "Unable to change user role."
+            );
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Change role error:",
+            error
+        );
+
+
+        alert(
+            "Unable to connect to backend."
+        );
+    }
+}
+
+
+// ======================================================
+// DELETE USER
+// ======================================================
+
+async function deleteUser(
+    userId
+) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete this user?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/admin/users/${userId}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (response.ok) {
+
+            alert(
+                data.message ||
+                "User deleted successfully."
+            );
+
+
+            await loadAdminUsers();
+            await loadAdminStats();
+
+
+        } else {
+
+            alert(
+                data.message ||
+                "Unable to delete user."
+            );
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Delete user error:",
+            error
+        );
+
+
+        alert(
+            "Unable to connect to backend."
+        );
+    }
+}
+
+
+// ======================================================
+// TEST ADMIN ACCESS
+// ======================================================
+
+async function testAdminAccess() {
+
+    const result =
+        document.getElementById(
+            "adminTestResult"
+        );
+
+
+    if (!result) {
+        return;
+    }
+
+
+    result.textContent =
+        "Checking admin authorization...";
+
+
+    try {
+
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/admin/test`
+            );
+
+
         const data =
             await response.text();
 
-        console.log(
-            "Admin test:",
-            response.status,
-            data
-        );
 
         if (response.ok) {
 
             result.textContent =
-                "Admin authorization successful: " +
+                "✅ Admin authorization successful: " +
                 data;
 
         } else {
 
             result.textContent =
-                "Admin authorization failed. Status: " +
+                "❌ Admin authorization failed. Status: " +
                 response.status;
         }
+
 
     } catch (error) {
 
@@ -2023,10 +2602,13 @@ async function testAdminAccess() {
             error
         );
 
+
         result.textContent =
             "Unable to connect to backend.";
     }
 }
+
+
 // ======================================================
 // LOGOUT
 // ======================================================
@@ -2045,158 +2627,230 @@ function logout() {
         "minicacheUsername"
     );
 
+    localStorage.removeItem(
+        "minicacheRole"
+    );
 
-    const dashboard =
-        document.getElementById(
-            "dashboardSection"
+
+    window.location.href =
+        "login.html";
+}
+
+
+// ======================================================
+// SIDEBAR NAVIGATION
+// ======================================================
+
+function initializeSidebarNavigation() {
+
+    const navItems =
+        document.querySelectorAll(
+            ".sidebar-nav .nav-item[href^='#']"
         );
 
-    const loginSection =
-        document.getElementById(
-            "loginSection"
+
+    const sections =
+        document.querySelectorAll(
+            ".dashboard-section"
         );
 
 
-    if (dashboard) {
-
-        dashboard.style.display =
-            "none";
+    if (
+        !navItems.length ||
+        !sections.length
+    ) {
+        return;
     }
 
 
-    if (loginSection) {
+    navItems.forEach(
+        item => {
 
-        loginSection.style.display =
-            "block";
-    }
+            item.addEventListener(
+                "click",
+                () => {
+
+                    navItems.forEach(
+                        nav =>
+                            nav.classList.remove(
+                                "active"
+                            )
+                    );
 
 
-    const username =
-        document.getElementById(
-            "username"
+                    item.classList.add(
+                        "active"
+                    );
+                }
+            );
+        }
+    );
+
+
+    const observer =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(
+                    entry => {
+
+                        if (
+                            !entry.isIntersecting
+                        ) {
+                            return;
+                        }
+
+
+                        const sectionId =
+                            entry.target.id;
+
+
+                        navItems.forEach(
+                            nav => {
+
+                                if (
+                                    nav.getAttribute(
+                                        "href"
+                                    ) ===
+                                    `#${sectionId}`
+                                ) {
+
+                                    navItems.forEach(
+                                        item =>
+                                            item.classList.remove(
+                                                "active"
+                                            )
+                                    );
+
+
+                                    nav.classList.add(
+                                        "active"
+                                    );
+                                }
+                            }
+                        );
+                    }
+                );
+            },
+            {
+                root: null,
+
+                rootMargin:
+                    "-20% 0px -65% 0px",
+
+                threshold: 0
+            }
         );
 
-    const password =
-        document.getElementById(
-            "password"
-        );
 
-    const message =
-        document.getElementById(
-            "loginMessage"
-        );
-
-
-    if (username)
-        username.value = "";
-
-    if (password)
-        password.value = "";
-
-    if (message)
-        message.textContent = "";
-
-
-    console.log(
-        "User logged out successfully."
+    sections.forEach(
+        section =>
+            observer.observe(
+                section
+            )
     );
 }
 
 
 // ======================================================
-// PAGE INITIALIZATION
+// DASHBOARD INITIALIZATION
 // ======================================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    async () => {
 
         console.log(
-            "MiniCache JavaScript loaded successfully."
+            "MiniCache Dashboard JavaScript loaded."
         );
-        showPersistenceStatus();
 
-        // Initialize chart if dashboard
-        // is already visible
-
-        const dashboard =
-            document.getElementById(
-                "dashboardSection"
-            );
-
-        if (
-            dashboard &&
-            dashboard.style.display !== "none"
-        ) {
-
-            initializeMetricsChart();
-        }
-
-
-        // ------------------------------------------------
-        // Check existing login
-        // ------------------------------------------------
 
         const token =
-            localStorage.getItem(
-                "minicacheToken"
-            );
-
-        if (token) {
-            displayUserRole();
-            const loginSection =
-                document.getElementById(
-                    "loginSection"
-                );
-
-            const dashboardSection =
-                document.getElementById(
-                    "dashboardSection"
-                );
+            getToken();
 
 
-            if (loginSection) {
+        // No login -> login page
 
-                loginSection.style.display =
-                    "none";
-            }
+        if (!token) {
 
+            window.location.href =
+                "login.html";
 
-            if (dashboardSection) {
-
-                dashboardSection.style.display =
-                    "block";
-            }
-
-            showAdminPanel();
-            initializeMetricsChart();
-
-            loadStatistics();
-            loadEntries();
-            loadActivity();
-            loadLRUOrder();
-            checkBackendStatus();
-            checkCacheHealth();
+            return;
         }
 
 
-        // ------------------------------------------------
-        // Automatic refresh
-        // ------------------------------------------------
+        // User information
+
+        displayUserRole();
+
+        showAdminPanel();
+
+
+        // Chart
+
+        initializeMetricsChart();
+
+
+        // Dashboard data
+
+        await loadStatistics();
+
+        await loadEntries();
+
+        await loadActivity();
+
+        await loadLRUOrder();
+
+        await checkBackendStatus();
+
+        await checkCacheHealth();
+
+        await showPersistenceStatus();
+
+
+        // Sidebar
+
+        initializeSidebarNavigation();
+
+
+        console.log(
+            "MiniCache Dashboard initialized successfully."
+        );
+
+
+        // ==================================================
+        // AUTO REFRESH
+        // ==================================================
 
         setInterval(
-            () => {
+            async () => {
+
+                if (!getToken()) {
+                    return;
+                }
+
+
+                await loadStatistics();
+
+                await loadEntries();
+
+                await loadActivity();
+
+                await loadLRUOrder();
+
+                await showPersistenceStatus();
+
 
                 if (
                     localStorage.getItem(
-                        "minicacheToken"
-                    )
+                        "minicacheRole"
+                    ) === "ADMIN"
                 ) {
 
-                    loadStatistics();
-                    loadEntries();
-                    loadActivity();
-                    loadLRUOrder();
+                    await loadAdminStats();
+
+                    await loadAdminUsers();
                 }
 
             },
@@ -2204,960 +2858,24 @@ document.addEventListener(
         );
 
 
+        // ==================================================
+        // BACKEND / HEALTH REFRESH
+        // ==================================================
+
         setInterval(
-            () => {
+            async () => {
 
-                if (
-                    localStorage.getItem(
-                        "minicacheToken"
-                    )
-                ) {
-
-                    checkBackendStatus();
-                    checkCacheHealth();
+                if (!getToken()) {
+                    return;
                 }
+
+
+                await checkBackendStatus();
+
+                await checkCacheHealth();
 
             },
             10000
         );
     }
 );
-// =========================
-// FORGOT PASSWORD UI
-// =========================
-
-document.getElementById("forgotPasswordLink").addEventListener("click", function (event) {
-    event.preventDefault();
-
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("forgotPasswordSection").style.display = "block";
-});
-
-document.getElementById("backToLogin").addEventListener("click", function (event) {
-    event.preventDefault();
-
-    document.getElementById("forgotPasswordSection").style.display = "none";
-    document.getElementById("loginSection").style.display = "block";
-});
-// =========================
-// FORGOT PASSWORD API
-// =========================
-
-async function requestPasswordReset() {
-
-    const username =
-        document.getElementById("forgotUsername").value.trim();
-
-    const message =
-        document.getElementById("forgotPasswordMessage");
-
-    if (!username) {
-        message.textContent =
-            "Please enter your username.";
-        return;
-    }
-
-    message.textContent =
-        "Sending reset request...";
-
-    try {
-
-        const response = await fetch(
-            `${API_URL}/auth/forgot-password`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    username: username
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        console.log(
-            "Forgot password response:",
-            data
-        );
-
-        if (response.ok) {
-
-            // Show success message
-            message.textContent =
-                "Password reset request sent successfully.";
-
-            // ------------------------------------
-            // GET RESET TOKEN FROM BACKEND
-            // ------------------------------------
-
-            if (data.resetToken) {
-
-                document.getElementById("resetToken").value =
-                    data.resetToken;
-
-                console.log(
-                    "Reset token received:",
-                    data.resetToken
-                );
-
-            } else {
-
-                console.log(
-                    "No reset token returned by backend."
-                );
-            }
-
-            // ------------------------------------
-            // WAIT 2 SECONDS BEFORE SHOWING RESET
-            // ------------------------------------
-
-            setTimeout(() => {
-
-                document.getElementById(
-                    "forgotPasswordSection"
-                ).style.display = "none";
-
-                document.getElementById(
-                    "resetPasswordSection"
-                ).style.display = "block";
-
-            }, 2000);
-
-        } else {
-
-            message.textContent =
-                data.message ||
-                "Password reset request failed.";
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Forgot password error:",
-            error
-        );
-
-        message.textContent =
-            "Unable to connect to the server.";
-    }
-}
-// =========================
-// RESET PASSWORD
-// =========================
-
-async function resetPassword() {
-
-    const token =
-        document.getElementById("resetToken").value.trim();
-
-    const newPassword =
-        document.getElementById("newPassword").value;
-
-    const confirmPassword =
-        document.getElementById("confirmPassword").value;
-
-    const message =
-        document.getElementById("resetPasswordMessage");
-
-    // Validate token
-    if (!token) {
-        message.textContent = "Please enter the reset token.";
-        return;
-    }
-
-    // Validate password
-    if (!newPassword) {
-        message.textContent = "Please enter a new password.";
-        return;
-    }
-    if (newPassword.length < 8) {
-        message.textContent =
-            "Password must be at least 8 characters.";
-        return;
-    }
-    // Confirm password
-    if (newPassword !== confirmPassword) {
-        message.textContent = "Passwords do not match.";
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `${API_URL}/auth/reset-password`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    token: token,
-                    newPassword: newPassword
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        console.log("Reset password response:", data);
-
-        if (response.ok && data.success) {
-
-            message.textContent =
-                "Password reset successfully. You can now login.";
-
-            // Clear fields
-            document.getElementById("resetToken").value = "";
-            document.getElementById("newPassword").value = "";
-            document.getElementById("confirmPassword").value = "";
-
-        } else {
-
-            message.textContent =
-                data.message || "Password reset failed.";
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Reset password error:",
-            error
-        );
-
-        message.textContent =
-            "Unable to connect to the server.";
-    }
-}
-// =========================
-// RESET PASSWORD - BACK TO LOGIN
-// =========================
-
-document.getElementById("resetBackToLogin").addEventListener(
-    "click",
-    function (event) {
-
-        event.preventDefault();
-
-        document.getElementById("resetPasswordSection").style.display = "none";
-
-        document.getElementById("loginSection").style.display = "block";
-
-        document.getElementById("resetPasswordMessage").textContent = "";
-
-        document.getElementById("resetToken").value = "";
-        document.getElementById("newPassword").value = "";
-        document.getElementById("confirmPassword").value = "";
-    }
-);
-// ======================================================
-// REGISTRATION UI
-// ======================================================
-
-const registerLink = document.getElementById("registerLink");
-
-if (registerLink) {
-    registerLink.addEventListener(
-        "click",
-        function (event) {
-
-            event.preventDefault();
-
-            document.getElementById("loginSection").style.display = "none";
-            document.getElementById("registerSection").style.display = "block";
-
-            document.getElementById("loginMessage").textContent = "";
-        }
-    );
-}
-
-
-// ======================================================
-// BACK TO LOGIN FROM REGISTRATION
-// ======================================================
-
-document.getElementById("backToLoginFromRegister").addEventListener(
-    "click",
-    function (event) {
-
-        event.preventDefault();
-
-        document.getElementById("registerSection").style.display = "none";
-        document.getElementById("loginSection").style.display = "block";
-
-        document.getElementById("registerMessage").textContent = "";
-    }
-);
-
-
-// ======================================================
-// REGISTER USER
-// ======================================================
-async function registerUser() {
-
-    const username =
-        document.getElementById("registerUsername").value.trim();
-
-    const email =
-        document.getElementById("registerEmail").value.trim();
-
-    const password =
-        document.getElementById("registerPassword").value;
-
-    const message =
-        document.getElementById("registerMessage");
-
-
-    // Validate username
-    if (!username) {
-
-        message.textContent =
-            "Please enter a username.";
-
-        return;
-    }
-
-
-    // Validate email
-    if (!email) {
-
-        message.textContent =
-            "Please enter your email.";
-
-        return;
-    }
-
-
-    // Basic email validation
-    const emailPattern =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailPattern.test(email)) {
-
-        message.textContent =
-            "Please enter a valid email address.";
-
-        return;
-    }
-
-
-    // Validate password
-    if (!password) {
-
-        message.textContent =
-            "Please enter a password.";
-
-        return;
-    }
-
-
-    if (password.length < 8) {
-
-        message.textContent =
-            "Password must be at least 8 characters.";
-
-        return;
-    }
-
-
-    message.textContent =
-        "Creating your account...";
-
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/auth/register`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        username: username,
-
-                        password: password,
-
-                        email: email
-
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        console.log(
-            "Registration response:",
-            data
-        );
-
-
-        if (response.ok && data.success) {
-
-            // ==============================
-            // SEND VERIFICATION EMAIL
-            // USING EMAILJS
-            // ==============================
-
-            const verificationLink =
-                `https://minicache-api.onrender.com/verify-email.html?token=${data.verificationToken}`;
-
-            await emailjs.send(
-                "service_om680x9",
-                "template_p8kbb3d",
-                {
-                    name: username,
-                    email: email,
-                    verification_link:
-                        `https://minicache-api.onrender.com/verify-email.html?token=${data.verificationToken}`
-                }
-            );
-
-
-            message.textContent =
-                "Registration successful! Please check your email and verify your account.";
-
-
-            // Clear registration fields
-
-            document.getElementById(
-                "registerUsername"
-            ).value = "";
-
-            document.getElementById(
-                "registerEmail"
-            ).value = "";
-
-            document.getElementById(
-                "registerPassword"
-            ).value = "";
-
-
-        } else {
-
-            message.textContent =
-                data.message ||
-                "Registration failed.";
-
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Registration / EmailJS error:",
-            error
-        );
-
-        message.textContent =
-            "Account creation succeeded, but the verification email could not be sent.";
-    }
-}
-async function showPersistenceStatus() {
-
-    const status =
-        document.getElementById("persistenceStatus");
-
-    if (!status) return;
-
-    const token =
-        localStorage.getItem("minicacheToken");
-
-    if (!token) {
-        status.textContent = "Login required";
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/cache/persistence/status`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Authorization":
-                            "Bearer " + token
-                    }
-                }
-            );
-
-        if (!response.ok) {
-            status.textContent =
-                "Unavailable";
-            return;
-        }
-
-        const data =
-            await response.json();
-
-        status.textContent =
-            data.enabled
-                ? "Enabled"
-                : "Disabled";
-
-    } catch (error) {
-
-        console.error(
-            "Persistence status error:",
-            error
-        );
-
-        status.textContent =
-            "Unavailable";
-    }
-}
-// ======================================================
-// ADMIN ROLE AUTHORIZATION
-// ======================================================
-
-function showAdminPanel() {
-
-    const role =
-        localStorage.getItem("minicacheRole");
-
-    const adminPanel =
-        document.getElementById("adminPanel");
-
-    if (!adminPanel) {
-        return;
-    }
-
-    if (role === "ADMIN") {
-
-        adminPanel.style.display = "block";
-
-    } else {
-
-        adminPanel.style.display = "none";
-    }
-}
-// ======================================================
-// LOAD ADMIN STATISTICS
-// ======================================================
-
-async function loadAdminStats() {
-
-    const token =
-        localStorage.getItem("minicacheToken");
-
-    const role =
-        localStorage.getItem("minicacheRole");
-
-    if (!token || role !== "ADMIN") {
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/admin/stats`,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Authorization":
-                            "Bearer " + token
-                    }
-                }
-            );
-
-        if (!response.ok) {
-            console.error(
-                "Failed to load admin statistics:",
-                response.status
-            );
-            return;
-        }
-
-        const data =
-            await response.json();
-
-        document.getElementById(
-            "adminTotalUsers"
-        ).textContent = data.totalUsers;
-
-        document.getElementById(
-            "adminTotalAdmins"
-        ).textContent = data.totalAdmins;
-
-        document.getElementById(
-            "adminTotalNormalUsers"
-        ).textContent = data.totalNormalUsers;
-
-        document.getElementById(
-            "adminVerifiedUsers"
-        ).textContent = data.verifiedUsers;
-
-        document.getElementById(
-            "adminUnverifiedUsers"
-        ).textContent = data.unverifiedUsers;
-        document.getElementById(
-            "adminCacheSize"
-        ).textContent = data.cacheSize;
-
-        document.getElementById(
-            "adminCacheCapacity"
-        ).textContent = data.cacheCapacity;
-
-        document.getElementById(
-            "adminCacheHits"
-        ).textContent = data.cacheHits;
-
-        document.getElementById(
-            "adminCacheMisses"
-        ).textContent = data.cacheMisses;
-
-        document.getElementById(
-            "adminCacheHitRate"
-        ).textContent =
-            data.cacheHitRate.toFixed(2) + "%";
-
-        document.getElementById(
-            "adminCacheEvictions"
-        ).textContent = data.cacheEvictions;
-    } catch (error) {
-
-        console.error(
-            "Admin statistics error:",
-            error
-        );
-    }
-}
-// ======================================================
-// LOAD ADMIN USER LIST
-// ======================================================
-
-async function loadAdminUsers() {
-
-    const token =
-        localStorage.getItem("minicacheToken");
-
-    const role =
-        localStorage.getItem("minicacheRole");
-
-    if (!token || role !== "ADMIN") {
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/admin/users`,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Authorization":
-                            "Bearer " + token
-                    }
-                }
-            );
-
-        if (!response.ok) {
-
-            console.error(
-                "Failed to load admin users:",
-                response.status
-            );
-
-            return;
-        }
-
-        const users =
-            await response.json();
-
-        const tableBody =
-            document.getElementById(
-                "adminUsersTableBody"
-            );
-
-        if (!tableBody) {
-            return;
-        }
-
-        tableBody.innerHTML = "";
-
-        users.forEach(user => {
-
-            const row =
-                document.createElement("tr");
-
-            row.innerHTML = `
-    <td>${user.id}</td>
-    <td>${user.username}</td>
-    <td>${user.email}</td>
-    <td>
-    <span class="role-badge ${user.role.toLowerCase()}">
-        ${user.role}
-    </span>
-</td>
-
-<td>
-    ${
-                user.emailVerified
-                    ? `<span class="status-badge verified">
-                   ✓ VERIFIED
-               </span>`
-                    : `<span class="status-badge unverified">
-                   ✕ UNVERIFIED
-               </span>`
-            }
-</td>
-    <td>
-        ${
-                user.role === "USER"
-                    ? `<button onclick="changeUserRole(${user.id}, 'ADMIN')">
-                       Make Admin
-                   </button>`
-                    : `<button onclick="changeUserRole(${user.id}, 'USER')">
-                       Make User
-                   </button>`
-            }
-
-        ${
-                user.role === "USER"
-                    ? `<button onclick="deleteUser(${user.id})">
-                       Delete
-                   </button>`
-                    : ""
-            }
-    </td>
-`;
-
-            tableBody.appendChild(row);
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Admin users error:",
-            error
-        );
-    }
-}
-// ======================================================
-// CHANGE USER ROLE
-// ======================================================
-
-async function changeUserRole(userId, newRole) {
-
-    const token =
-        localStorage.getItem("minicacheToken");
-
-    if (!token) {
-        alert("Please login first.");
-        return;
-    }
-
-    const confirmed =
-        confirm(
-            `Change this user's role to ${newRole}?`
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/admin/users/${userId}/role?role=${newRole}`,
-                {
-                    method: "PUT",
-
-                    headers: {
-                        "Authorization":
-                            "Bearer " + token
-                    }
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (response.ok) {
-
-            alert(
-                data.message
-            );
-
-            loadAdminUsers();
-            loadAdminStats();
-
-        } else {
-
-            alert(
-                data.message ||
-                "Unable to change user role."
-            );
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Change role error:",
-            error
-        );
-
-        alert(
-            "Unable to connect to backend."
-        );
-    }
-}
-// ======================================================
-// DELETE USER
-// ======================================================
-
-async function deleteUser(userId) {
-
-    const token =
-        localStorage.getItem("minicacheToken");
-
-    if (!token) {
-        alert("Please login first.");
-        return;
-    }
-
-    const confirmed =
-        confirm(
-            "Are you sure you want to delete this user?"
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/admin/users/${userId}`,
-                {
-                    method: "DELETE",
-
-                    headers: {
-                        "Authorization":
-                            "Bearer " + token
-                    }
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (response.ok) {
-
-            alert(
-                data.message
-            );
-
-            loadAdminUsers();
-            loadAdminStats();
-
-        } else {
-
-            alert(
-                data.message ||
-                "Unable to delete user."
-            );
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Delete user error:",
-            error
-        );
-
-        alert(
-            "Unable to connect to backend."
-        );
-    }
-}
-// ======================================================
-// TEST ADMIN API
-// ======================================================
-
-async function testAdminAccess() {
-
-    const token =
-        localStorage.getItem("minicacheToken");
-
-    const result =
-        document.getElementById("adminTestResult");
-
-    if (!token) {
-
-        result.textContent =
-            "Please login first.";
-
-        return;
-    }
-
-    result.textContent =
-        "Checking admin authorization...";
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/admin/test`,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Authorization":
-                            "Bearer " + token
-                    }
-                }
-            );
-
-        const data =
-            await response.text();
-
-        console.log(
-            "Admin test response:",
-            response.status,
-            data
-        );
-
-        if (response.ok) {
-
-            result.textContent =
-                "✅ Admin authorization successful: " +
-                data;
-
-        } else {
-
-            result.textContent =
-                "❌ Admin authorization failed. Status: " +
-                response.status;
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Admin test error:",
-            error
-        );
-
-        result.textContent =
-            "Unable to connect to backend.";
-    }
-}

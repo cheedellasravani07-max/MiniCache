@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>MiniCache | Get Started</title>
+
+    <link rel="stylesheet"
+          href="auth.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="auth-page">
+
+    <div class="auth-brand">
+
+        <div class="brand-logo">
+            <i class="fa-solid fa-database"></i>
+        </div>
+
+        <div>
+            <h1>MiniCache</h1>
+            <p>High-Performance In-Memory Cache</p>
+        </div>
+
+    </div>
+
+
+    <div class="auth-card">
+
+        <div class="auth-icon">
+            <i class="fa-solid fa-user-plus"></i>
+        </div>
+
+        <h2>Create your account</h2>
+
+        <p class="subtitle">
+            Get started with MiniCache
+        </p>
+
+
+        <form id="signupForm">
+
+            <div class="input-group">
+
+                <label>
+                    Username
+                </label>
+
+                <div class="input-box">
+
+                    <i class="fa-solid fa-user"></i>
+
+                    <input
+                            type="text"
+                            id="signupUsername"
+                            placeholder="Enter username"
+                            required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Email
+                </label>
+
+                <div class="input-box">
+
+                    <i class="fa-solid fa-envelope"></i>
+
+                    <input
+                            type="email"
+                            id="signupEmail"
+                            placeholder="Enter email"
+                            required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    Password
+                </label>
+
+                <div class="input-box">
+
+                    <i class="fa-solid fa-lock"></i>
+
+                    <input
+                            type="password"
+                            id="signupPassword"
+                            placeholder="Create password"
+                            required
+                    >
+
+                    <i class="fa-solid fa-eye password-toggle"
+                       id="togglePassword"></i>
+
+                </div>
+
+            </div>
+
+
+            <button
+                    type="submit"
+                    class="primary-btn">
+
+                <i class="fa-solid fa-user-plus"></i>
+
+                Create Account
+
+            </button>
+
+
+            <p id="signupMessage"
+               class="auth-message">
+            </p>
+
+        </form>
+
+
+        <div class="divider">
+            <span>Already have an account?</span>
+        </div>
+
+
+        <button
+                class="secondary-btn"
+                id="goToLogin">
+
+            <i class="fa-solid fa-right-to-bracket"></i>
+
+            Login
+
+        </button>
+
+    </div>
+
+
+    <p class="footer-text">
+
+        © 2026 MiniCache · Secure · Fast · Reliable
+
+    </p>
+
+</div>
+
+
+<script src="auth.js"></script>
+
+</body>
+
+</html>
