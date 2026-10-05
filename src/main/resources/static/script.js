@@ -1167,7 +1167,7 @@ async function checkBackendStatus() {
 
         const response =
             await authenticatedFetch(
-                `${API_URL}/cache/stats`
+                `${API_URL}/cache/health`
             );
 
 
@@ -2782,10 +2782,21 @@ document.addEventListener(
 
         // User information
 
+
+// User information
+
         displayUserRole();
 
-        showAdminPanel();
+        const dashboardSection =
+            document.getElementById(
+                "dashboardSection"
+            );
 
+        if (dashboardSection) {
+            dashboardSection.style.display = "flex";
+        }
+
+        showAdminPanel();
 
         // Chart
 
