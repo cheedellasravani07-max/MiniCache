@@ -1145,7 +1145,6 @@ async function loadLRUOrder() {
     }
 }
 
-
 // ======================================================
 // BACKEND STATUS
 // ======================================================
@@ -1157,31 +1156,38 @@ async function checkBackendStatus() {
             "backendStatus"
         );
 
-
     if (!statusElement) {
         return;
     }
 
-
     try {
 
         const response =
-            await authenticatedFetch(
+            await fetch(
                 `${API_URL}/cache/health`
             );
 
-
         if (response.ok) {
 
-            statusElement.textContent =
-                "🟢 Online";
+            const data =
+                await response.text();
+
+            if (data.trim() === "UP") {
+
+                statusElement.textContent =
+                    "🟢 Online";
+
+            } else {
+
+                statusElement.textContent =
+                    "🔴 Offline";
+            }
 
         } else {
 
             statusElement.textContent =
                 "🔴 Offline";
         }
-
 
     } catch (error) {
 
@@ -1194,6 +1200,13 @@ async function checkBackendStatus() {
         );
     }
 }
+
+
+
+
+
+
+
 
 
 // ======================================================
