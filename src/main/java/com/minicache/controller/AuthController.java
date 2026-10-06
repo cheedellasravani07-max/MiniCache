@@ -121,7 +121,21 @@ public class AuthController {
                     .badRequest()
                     .body(response);
         }
+// =========================
+// Check email
+// =========================
 
+        if (userRepository.existsByEmail(
+                user.getEmail())) {
+
+            response.put("success", false);
+            response.put("message",
+                    "Email already exists. Please use another email or login.");
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(response);
+        }
         // =========================
         // Create user
         // =========================
@@ -522,7 +536,6 @@ public class AuthController {
                         request.getNewPassword()
                 );
 
-        user.setPassword(encodedPassword);
 
         userRepository.save(user);
 
