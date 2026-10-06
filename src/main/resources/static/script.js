@@ -1152,9 +1152,7 @@ async function loadLRUOrder() {
 async function checkBackendStatus() {
 
     const statusElement =
-        document.getElementById(
-            "backendStatus"
-        );
+        document.getElementById("backendStatus");
 
     if (!statusElement) {
         return;
@@ -1169,19 +1167,8 @@ async function checkBackendStatus() {
 
         if (response.ok) {
 
-            const data =
-                await response.text();
-
-            if (data.trim() === "UP") {
-
-                statusElement.textContent =
-                    "🟢 Online";
-
-            } else {
-
-                statusElement.textContent =
-                    "🔴 Offline";
-            }
+            statusElement.textContent =
+                "🟢 Online";
 
         } else {
 
@@ -1200,15 +1187,6 @@ async function checkBackendStatus() {
         );
     }
 }
-
-
-
-
-
-
-
-
-
 // ======================================================
 // CACHE HEALTH
 // ======================================================
@@ -2860,8 +2838,6 @@ document.addEventListener(
                 await loadEntries();
 
                 await loadActivity();
-
-                await loadLRUOrder();
 
                 await showPersistenceStatus();
 
