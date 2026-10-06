@@ -154,16 +154,6 @@ public class CacheController {
         );
     }
 
-    // Clear entire cache
-    @DeleteMapping
-    public ResponseEntity<String> clear() {
-
-        cache.clear();
-        persistenceService.saveClear();
-        return ResponseEntity.ok(
-                "Cache cleared successfully"
-        );
-    }
 
     // Cache statistics
     @GetMapping("/stats")
@@ -215,13 +205,17 @@ public class CacheController {
                 new ArrayList<>(activityLog)
         );
     }
-    @DeleteMapping("/activity")
-    public ResponseEntity<String> clearActivity() {
+    @DeleteMapping
+    public ResponseEntity<String> clear() {
+
+        cache.clear();
 
         activityLog.clear();
 
+        persistenceService.saveClear();
+
         return ResponseEntity.ok(
-                "Activity log cleared successfully"
+                "Cache and activity log cleared successfully"
         );
     }
     @GetMapping("/lru")

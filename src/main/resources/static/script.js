@@ -1153,7 +1153,10 @@ async function checkBackendStatus() {
     const statusElement =
         document.getElementById("backendStatus");
 
-    if (!statusElement) {
+    const healthStatusElement =
+        document.getElementById("backendStatusHealth");
+
+    if (!statusElement && !healthStatusElement) {
         return;
     }
 
@@ -1164,6 +1167,9 @@ async function checkBackendStatus() {
                 `${API_URL}/cache/health`
             );
 
+        let statusText;
+        let statusColor;
+
         if (response.ok) {
 
             const data =
@@ -1171,22 +1177,49 @@ async function checkBackendStatus() {
 
             if (data.trim() === "UP") {
 
-                statusElement.textContent =
-                    "🟢 Online";
-
-                statusElement.style.color =
-                    "green";
+                statusText = "🟢 Online";
+                statusColor = "green";
 
             } else {
 
-                statusElement.textContent =
-                    "🔴 Offline";
-
-                statusElement.style.color =
-                    "red";
+                statusText = "🔴 Offline";
+                statusColor = "red";
             }
 
         } else {
+
+            statusText = "🔴 Offline";
+            statusColor = "red";
+        }
+
+        // Top bar
+        if (statusElement) {
+
+            statusElement.textContent =
+                statusText;
+
+            statusElement.style.color =
+                statusColor;
+        }
+
+        // Performance section
+        if (healthStatusElement) {
+
+            healthStatusElement.textContent =
+                statusText;
+
+            healthStatusElement.style.color =
+                statusColor;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Backend status error:",
+            error
+        );
+
+        if (statusElement) {
 
             statusElement.textContent =
                 "🔴 Offline";
@@ -1195,21 +1228,16 @@ async function checkBackendStatus() {
                 "red";
         }
 
-    } catch (error) {
+        if (healthStatusElement) {
 
-        statusElement.textContent =
-            "🔴 Offline";
+            healthStatusElement.textContent =
+                "🔴 Offline";
 
-        statusElement.style.color =
-            "red";
-
-        console.error(
-            "Backend status error:",
-            error
-        );
+            healthStatusElement.style.color =
+                "red";
+        }
     }
 }
-
 // ======================================================
 // CACHE HEALTH
 // ======================================================
