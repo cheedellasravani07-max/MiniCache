@@ -1148,7 +1148,6 @@ async function loadLRUOrder() {
 // ======================================================
 // BACKEND STATUS
 // ======================================================
-
 async function checkBackendStatus() {
 
     const statusElement =
@@ -1167,13 +1166,33 @@ async function checkBackendStatus() {
 
         if (response.ok) {
 
-            statusElement.textContent =
-                "🟢 Online";
+            const data =
+                await response.text();
+
+            if (data.trim() === "UP") {
+
+                statusElement.textContent =
+                    "🟢 Online";
+
+                statusElement.style.color =
+                    "green";
+
+            } else {
+
+                statusElement.textContent =
+                    "🔴 Offline";
+
+                statusElement.style.color =
+                    "red";
+            }
 
         } else {
 
             statusElement.textContent =
                 "🔴 Offline";
+
+            statusElement.style.color =
+                "red";
         }
 
     } catch (error) {
@@ -1181,12 +1200,16 @@ async function checkBackendStatus() {
         statusElement.textContent =
             "🔴 Offline";
 
+        statusElement.style.color =
+            "red";
+
         console.error(
             "Backend status error:",
             error
         );
     }
 }
+
 // ======================================================
 // CACHE HEALTH
 // ======================================================
