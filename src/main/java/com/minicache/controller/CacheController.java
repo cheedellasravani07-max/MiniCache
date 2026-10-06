@@ -215,6 +215,15 @@ public class CacheController {
                 new ArrayList<>(activityLog)
         );
     }
+    @DeleteMapping("/activity")
+    public ResponseEntity<String> clearActivity() {
+
+        activityLog.clear();
+
+        return ResponseEntity.ok(
+                "Activity log cleared successfully"
+        );
+    }
     @GetMapping("/lru")
     public ResponseEntity<List<String>> getLRUOrder() {
 

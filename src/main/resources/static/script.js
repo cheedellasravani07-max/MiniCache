@@ -1697,32 +1697,56 @@ async function runConcurrencyBenchmark() {
 // ======================================================
 // CLEAR ACTIVITY
 // ======================================================
-
-function clearActivity() {
+async function clearActivity() {
 
     const activityTable =
         document.getElementById(
             "cacheActivity"
         );
 
-
     if (!activityTable) {
         return;
     }
 
+    try {
 
-    activityTable.innerHTML = `
-        <tr>
-            <td colspan="4">
-                No activity yet
-            </td>
-        </tr>
-    `;
+        const response =
+            await authenticatedFetch(
+                `${API_URL}/cache/activity`,
+                {
+                    method: "DELETE"
+                }
+            );
 
+        if (!response.ok) {
 
-    activityLog = [];
+            throw new Error(
+                "Failed to clear activity."
+            );
+        }
+
+        activityTable.innerHTML = `
+            <tr>
+                <td colspan="4">
+                    No activity yet
+                </td>
+            </tr>
+        `;
+
+        activityLog = [];
+
+    } catch (error) {
+
+        console.error(
+            "Clear activity error:",
+            error
+        );
+
+        alert(
+            "Unable to clear activity."
+        );
+    }
 }
-
 
 // ======================================================
 // CHART
