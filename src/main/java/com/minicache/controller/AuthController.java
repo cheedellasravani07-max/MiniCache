@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import com.minicache.model.Role;
+import com.minicache.service.EmailService;
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
@@ -26,13 +27,14 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final EmailService emailService;
 
     public AuthController(
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             UserRepository userRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
-            EmailVerificationTokenRepository emailVerificationTokenRepository) {
+            EmailVerificationTokenRepository emailVerificationTokenRepository,EmailService emailService) {
 
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -41,6 +43,7 @@ public class AuthController {
                 passwordResetTokenRepository;
         this.emailVerificationTokenRepository =
                 emailVerificationTokenRepository;
+        this.emailService = emailService;
 
     }
 
@@ -334,11 +337,7 @@ public class AuthController {
                     .body(response);
         }
     }
-
-    // =========================
     // FORGOT PASSWORD
-    // =========================
-
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, Object>> forgotPassword(
             @RequestBody Map<String, String> request) {
@@ -353,8 +352,10 @@ public class AuthController {
                 username.isBlank()) {
 
             response.put("success", false);
-            response.put("message",
-                    "Username is required");
+            response.put(
+                    "message",
+                    "Username is required"
+            );
 
             return ResponseEntity
                     .badRequest()
@@ -366,22 +367,24 @@ public class AuthController {
                         .findByUsername(username)
                         .orElse(null);
 
+        /*
+         * Do not reveal whether the username exists.
+         * This prevents account enumeration.
+         */
         if (user == null) {
 
-            response.put("success", false);
-            response.put("message",
-                    "User not found");
+            response.put("success", true);
+            response.put(
+                    "message",
+                    "If an account exists with this username, a password reset email has been sent."
+            );
 
-            return ResponseEntity
-                    .status(404)
-                    .body(response);
+            return ResponseEntity.ok(response);
         }
 
-        // Generate secure reset token
         String resetToken =
                 UUID.randomUUID().toString();
 
-        // Token valid for 15 minutes
         LocalDateTime expiryTime =
                 LocalDateTime.now()
                         .plusMinutes(15);
@@ -396,15 +399,25 @@ public class AuthController {
         passwordResetTokenRepository
                 .save(passwordResetToken);
 
+        String resetLink =
+                "https://minicache-frontend.onrender.com/reset-password.html?token="
+                        + resetToken;
+
+        emailService.sendEmail(
+                user.getEmail(),
+                user.getUsername(),
+                "MiniCache - Reset Your Password",
+                "We received a request to reset your MiniCache password.",
+                resetLink,
+                "Reset Password",
+                15
+        );
+
         response.put("success", true);
-
-        response.put("message",
-                "Password reset token generated");
-
-        // Temporary testing response.
-        // Later this token should be sent through email.
-        response.put("resetToken",
-                resetToken);
+        response.put(
+                "message",
+                "If an account exists with this username, a password reset email has been sent."
+        );
 
         return ResponseEntity.ok(response);
     }

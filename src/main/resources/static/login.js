@@ -294,22 +294,71 @@ document
         }
     );
 
-
-// =====================================================
 // FORGOT PASSWORD
-// =====================================================
-
 document
     .getElementById("forgotPasswordLink")
     .addEventListener(
         "click",
-        (event) => {
+        async (event) => {
 
             event.preventDefault();
 
-            alert(
-                "Password reset will be available here."
-            );
+            const username =
+                prompt(
+                    "Enter your MiniCache username:"
+                );
 
+            if (!username || !username.trim()) {
+                return;
+            }
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/auth/forgot-password`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                username:
+                                    username.trim()
+                            })
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (response.ok && data.success) {
+
+                    alert(
+                        "If an account exists with this username, a password reset email has been sent. Please check your email."
+                    );
+
+                } else {
+
+                    alert(
+                        data.message ||
+                        "Unable to process password reset request."
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Forgot password error:",
+                    error
+                );
+
+                alert(
+                    "Unable to connect to the server."
+                );
+            }
         }
     );
