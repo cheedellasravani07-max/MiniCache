@@ -205,6 +205,15 @@ public class CacheController {
                 new ArrayList<>(activityLog)
         );
     }
+    @DeleteMapping("/activity")
+    public ResponseEntity<String> clearActivity() {
+
+        activityLog.clear();
+
+        return ResponseEntity.ok(
+                "Activity log cleared successfully"
+        );
+    }
     @DeleteMapping
     public ResponseEntity<String> clear() {
 
