@@ -400,7 +400,7 @@ public class AuthController {
                 .save(passwordResetToken);
 
         String resetLink =
-                "https://minicache-frontend.onrender.com/reset-password.html?token="
+                "https://minicache-api.onrender.com/reset-password.html?token="
                         + resetToken;
 
         emailService.sendEmail(
